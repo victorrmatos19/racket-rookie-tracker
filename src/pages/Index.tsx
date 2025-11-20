@@ -1,8 +1,12 @@
 import { StudentCard } from "@/components/StudentCard";
 import { StatsCard } from "@/components/StatsCard";
-import { Users, TrendingUp, Calendar, Award } from "lucide-react";
+import { Users, TrendingUp, Calendar, Award, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
+  const { signOut, user } = useAuth();
+  
   const students = [
     {
       name: "João Silva",
@@ -88,6 +92,20 @@ const Index = () => {
               <p className="text-muted-foreground">
                 Gerencie seus alunos e acompanhe a evolução
               </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {user?.email}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={signOut}
+                className="gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Sair
+              </Button>
             </div>
           </div>
         </div>
