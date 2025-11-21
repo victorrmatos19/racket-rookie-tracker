@@ -27,6 +27,7 @@ interface StudentCardProps {
   classDays: string[];
   classTime: string;
   status: "active" | "inactive" | "improving" | "pending";
+  monthlyFee?: number;
   onDelete?: () => void;
   forehandProgress?: number;
   backhandProgress?: number;
@@ -72,6 +73,7 @@ export const StudentCard = ({
   classDays, 
   classTime, 
   status, 
+  monthlyFee = 0,
   onDelete,
   forehandProgress = 0,
   backhandProgress = 0,
@@ -145,6 +147,7 @@ export const StudentCard = ({
                 status,
                 class_days: classDays,
                 class_time: classTime,
+                monthly_fee: monthlyFee,
                 forehand_progress: forehandProgress,
                 backhand_progress: backhandProgress,
                 serve_progress: serveProgress,

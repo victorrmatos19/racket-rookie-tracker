@@ -116,6 +116,7 @@ const Index = () => {
                   classDays={student.class_days || []}
                   classTime={student.class_time || ""}
                   status={student.status}
+                  monthlyFee={student.monthly_fee}
                   onDelete={fetchStudents}
                   forehandProgress={student.forehand_progress}
                   backhandProgress={student.backhand_progress}

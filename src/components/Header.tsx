@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { LogOut, LayoutDashboard, Calendar } from "lucide-react";
+import { LogOut, LayoutDashboard, Calendar, DollarSign } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ export const Header = () => {
   const navItems = [
     { path: "/", label: "Dashboard", icon: LayoutDashboard },
     { path: "/schedule", label: "Cronograma", icon: Calendar },
+    { path: "/financial", label: "Financeiro", icon: DollarSign },
   ];
 
   return (

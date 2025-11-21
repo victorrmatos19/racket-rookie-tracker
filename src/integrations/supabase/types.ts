@@ -47,6 +47,7 @@ export type Database = {
           forehand_progress: number
           id: string
           level: string
+          monthly_fee: number
           name: string
           physical_progress: number
           progress: number
@@ -66,6 +67,7 @@ export type Database = {
           forehand_progress?: number
           id?: string
           level: string
+          monthly_fee?: number
           name: string
           physical_progress?: number
           progress?: number
@@ -85,6 +87,7 @@ export type Database = {
           forehand_progress?: number
           id?: string
           level?: string
+          monthly_fee?: number
           name?: string
           physical_progress?: number
           progress?: number

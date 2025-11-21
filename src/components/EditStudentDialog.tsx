@@ -46,6 +46,7 @@ export function EditStudentDialog({ student, onStudentUpdated }: EditStudentDial
     status: student.status,
     class_days: student.class_days || [],
     class_time: student.class_time || "",
+    monthly_fee: student.monthly_fee?.toString() || "",
     forehand_progress: student.forehand_progress,
     backhand_progress: student.backhand_progress,
     serve_progress: student.serve_progress,
@@ -63,6 +64,7 @@ export function EditStudentDialog({ student, onStudentUpdated }: EditStudentDial
         status: student.status,
         class_days: student.class_days || [],
         class_time: student.class_time || "",
+        monthly_fee: student.monthly_fee?.toString() || "",
         forehand_progress: student.forehand_progress,
         backhand_progress: student.backhand_progress,
         serve_progress: student.serve_progress,
@@ -86,6 +88,7 @@ export function EditStudentDialog({ student, onStudentUpdated }: EditStudentDial
           status: formData.status,
           class_days: formData.class_days,
           class_time: formData.class_time,
+          monthly_fee: parseFloat(formData.monthly_fee) || 0,
           forehand_progress: formData.forehand_progress,
           backhand_progress: formData.backhand_progress,
           serve_progress: formData.serve_progress,
@@ -200,6 +203,20 @@ export function EditStudentDialog({ student, onStudentUpdated }: EditStudentDial
                 type="time"
                 value={formData.class_time}
                 onChange={(e) => setFormData({ ...formData, class_time: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-monthly-fee">Valor Mensal (R$)</Label>
+              <Input
+                id="edit-monthly-fee"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={formData.monthly_fee}
+                onChange={(e) => setFormData({ ...formData, monthly_fee: e.target.value })}
+                required
               />
             </div>
 

@@ -54,6 +54,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
     classDays: [] as string[],
     classTime: "",
     status: "active",
+    monthlyFee: "",
     forehandProgress: 0,
     backhandProgress: 0,
     serveProgress: 0,
@@ -88,6 +89,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
         class_days: formData.classDays,
         class_time: formData.classTime,
         status: formData.status,
+        monthly_fee: parseFloat(formData.monthlyFee) || 0,
         forehand_progress: formData.forehandProgress,
         backhand_progress: formData.backhandProgress,
         serve_progress: formData.serveProgress,
@@ -111,6 +113,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
         classDays: [],
         classTime: "",
         status: "active",
+        monthlyFee: "",
         forehandProgress: 0,
         backhandProgress: 0,
         serveProgress: 0,
@@ -241,6 +244,19 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
                 type="time"
                 value={formData.classTime}
                 onChange={(e) => setFormData({ ...formData, classTime: e.target.value })}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="monthlyFee">Valor Mensal (R$)</Label>
+              <Input
+                id="monthlyFee"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={formData.monthlyFee}
+                onChange={(e) => setFormData({ ...formData, monthlyFee: e.target.value })}
                 required
               />
             </div>
