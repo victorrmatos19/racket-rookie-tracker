@@ -6,6 +6,7 @@ import { Users, TrendingUp, Calendar, Award, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import {
   Pagination,
@@ -18,6 +19,7 @@ import {
 
 const Index = () => {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,6 +49,17 @@ const Index = () => {
   useEffect(() => {
     fetchStudents();
   }, []);
+
+  useEffect(() => {
+    const studentId = searchParams.get("studentId");
+    if (studentId && students.length > 0) {
+      const student = students.find((s) => s.id === studentId);
+      if (student) {
+        setSearchTerm(student.name);
+        setSearchParams({});
+      }
+    }
+  }, [searchParams, students]);
 
   useEffect(() => {
     setCurrentPage(1);

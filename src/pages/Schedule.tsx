@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
@@ -38,6 +39,7 @@ const Schedule = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchStudents();
@@ -180,7 +182,8 @@ const Schedule = () => {
                             {classSlot.students.map((student) => (
                               <div
                                 key={student.id}
-                                className="flex items-center justify-between text-sm bg-muted/30 rounded px-2 py-1.5"
+                                className="flex items-center justify-between text-sm bg-muted/30 rounded px-2 py-1.5 hover:bg-muted/50 transition-colors cursor-pointer"
+                                onClick={() => navigate(`/?studentId=${student.id}`)}
                               >
                                 <span className="font-medium">
                                   {student.name}
