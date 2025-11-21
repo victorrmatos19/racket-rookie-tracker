@@ -8,6 +8,15 @@ import { AddExpenseDialog } from "@/components/AddExpenseDialog";
 import { EditExpenseDialog } from "@/components/EditExpenseDialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { format, startOfMonth, endOfMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +37,22 @@ const Financial = () => {
   const [loading, setLoading] = useState(true);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   const { toast } = useToast();
+
+  // Gerar lista dos últimos 12 meses
+  const getMonthOptions = () => {
+    const months = [];
+    const today = new Date();
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      months.push({
+        value: format(date, 'yyyy-MM'),
+        label: format(date, 'MMMM yyyy', { locale: ptBR }),
+      });
+    }
+    return months;
+  };
 
   useEffect(() => {
     fetchData();
@@ -82,25 +106,52 @@ const Financial = () => {
     }
   };
 
+  // Filtrar despesas pelo mês selecionado
+  const filteredExpenses = expenses.filter(expense => {
+    const expenseDate = new Date(expense.expense_date);
+    const expenseMonth = format(expenseDate, 'yyyy-MM');
+    return expenseMonth === selectedMonth;
+  });
+
   const activeStudents = students.filter(s => s.status === "active");
   const totalRevenue = activeStudents.reduce((sum, student) => {
     const fee = typeof student.monthly_fee === 'number' ? student.monthly_fee : 0;
     return sum + fee;
   }, 0);
-  const totalExpenses = expenses.reduce((sum, expense) => {
+  const totalExpenses = filteredExpenses.reduce((sum, expense) => {
     const amount = typeof expense.amount === 'number' ? expense.amount : 0;
     return sum + amount;
   }, 0);
   const netProfit = totalRevenue - totalExpenses;
   const averageRevenue = activeStudents.length > 0 ? totalRevenue / activeStudents.length : 0;
 
+  const selectedMonthLabel = format(new Date(selectedMonth + '-01'), 'MMMM yyyy', { locale: ptBR });
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Financeiro</h1>
-          <p className="text-muted-foreground">Visualização do faturamento mensal</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-foreground mb-2">
+                Financeiro - {selectedMonthLabel.charAt(0).toUpperCase() + selectedMonthLabel.slice(1)}
+              </h1>
+              <p className="text-muted-foreground">Visualização do faturamento mensal</p>
+            </div>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Selecione o mês" />
+              </SelectTrigger>
+              <SelectContent>
+                {getMonthOptions().map((month) => (
+                  <SelectItem key={month.value} value={month.value}>
+                    {month.label.charAt(0).toUpperCase() + month.label.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {loading ? (
@@ -244,13 +295,13 @@ const Financial = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {expenses.length === 0 ? (
+                  {filteredExpenses.length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
-                      Nenhuma despesa cadastrada
+                      Nenhuma despesa cadastrada neste mês
                     </p>
                   ) : (
                     <div className="divide-y">
-                      {expenses.map((expense) => {
+                      {filteredExpenses.map((expense) => {
                         const amount = typeof expense.amount === 'number' ? expense.amount : 0;
                         return (
                           <div key={expense.id} className="flex items-center justify-between py-4">
