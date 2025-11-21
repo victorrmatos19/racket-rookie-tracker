@@ -2,6 +2,8 @@ import { useState, useEffect, createContext, useContext, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useInactivityTimeout } from "./useInactivityTimeout";
+import { toast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   user: User | null;
@@ -79,6 +81,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
+
+  // Inactivity timeout - 5 minutes
+  useInactivityTimeout({
+    onTimeout: () => {
+      toast({
+        title: "Sessão expirada",
+        description: "Sua sessão expirou por inatividade. Faça login novamente.",
+        variant: "destructive",
+      });
+      signOut();
+    },
+    timeout: 300000, // 5 minutes
+    enabled: !!user,
+    warningTime: 30000, // Warning 30 seconds before
+    onWarning: () => {
+      toast({
+        title: "Aviso de inatividade",
+        description: "Sua sessão vai expirar em 30 segundos. Mova o mouse para continuar conectado.",
+      });
+    },
+  });
 
   return (
     <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
