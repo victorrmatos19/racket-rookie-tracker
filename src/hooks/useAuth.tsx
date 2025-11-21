@@ -72,20 +72,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
     
     if (!error && data.user) {
-      // Insert user role after successful signup
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({ user_id: data.user.id, role: role as any });
-      
-      if (roleError) {
-        console.error('Error inserting user role:', roleError);
-        toast({
-          title: "Aviso",
-          description: "Conta criada, mas houve um erro ao definir o tipo de usuário. Entre em contato com o administrador.",
-          variant: "destructive",
-        });
-      }
-      
       navigate("/");
     }
     
