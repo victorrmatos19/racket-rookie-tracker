@@ -24,6 +24,30 @@ const Auth = () => {
     documento: "",
   });
 
+  const formatDocumento = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    
+    if (numbers.length <= 11) {
+      // CPF: 000.000.000-00
+      return numbers
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    } else {
+      // CNPJ: 00.000.000/0000-00
+      return numbers
+        .replace(/(\d{2})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1/$2")
+        .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+    }
+  };
+
+  const handleDocumentoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatDocumento(e.target.value);
+    setSignupData({ ...signupData, documento: formatted });
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -127,9 +151,9 @@ const Auth = () => {
                     <Input
                       id="signup-documento"
                       type="text"
-                      placeholder="000.000.000-00"
+                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
                       value={signupData.documento}
-                      onChange={(e) => setSignupData({ ...signupData, documento: e.target.value })}
+                      onChange={handleDocumentoChange}
                       required
                       maxLength={18}
                     />
