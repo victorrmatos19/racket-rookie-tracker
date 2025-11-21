@@ -8,8 +8,9 @@ import { AddExpenseDialog } from "@/components/AddExpenseDialog";
 import { EditExpenseDialog } from "@/components/EditExpenseDialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfMonth, endOfMonth, parse } from "date-fns";
+import { format, startOfMonth, endOfMonth, parse, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import {
   Select,
   SelectContent,
@@ -126,6 +127,43 @@ const Financial = () => {
   const averageRevenue = activeStudents.length > 0 ? totalRevenue / activeStudents.length : 0;
 
   const selectedMonthLabel = format(parse(selectedMonth, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ptBR });
+
+  // Calcular dados mensais para o gráfico (últimos 12 meses)
+  const getMonthlyData = () => {
+    const data = [];
+    const today = new Date();
+    
+    for (let i = 11; i >= 0; i--) {
+      const monthDate = subMonths(today, i);
+      const monthKey = format(monthDate, 'yyyy-MM');
+      const monthLabel = format(monthDate, 'MMM/yy', { locale: ptBR });
+      
+      // Filtrar despesas do mês
+      const monthExpenses = expenses.filter(expense => {
+        const expenseMonth = format(new Date(expense.expense_date), 'yyyy-MM');
+        return expenseMonth === monthKey;
+      });
+      
+      const totalExpensesMonth = monthExpenses.reduce((sum, expense) => {
+        return sum + (typeof expense.amount === 'number' ? expense.amount : 0);
+      }, 0);
+      
+      // Faturamento é sempre o mesmo (alunos ativos * mensalidade)
+      const revenue = totalRevenue;
+      const profit = revenue - totalExpensesMonth;
+      
+      data.push({
+        month: monthLabel,
+        faturamento: revenue,
+        despesas: totalExpensesMonth,
+        lucro: profit,
+      });
+    }
+    
+    return data;
+  };
+
+  const monthlyData = getMonthlyData();
 
   return (
     <div className="min-h-screen bg-background">
@@ -244,6 +282,65 @@ const Financial = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Evolução Anual</CardTitle>
+                <CardDescription>Comparativo mensal de faturamento, despesas e lucro líquido</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="month" 
+                      style={{ fontSize: '12px' }}
+                    />
+                    <YAxis 
+                      style={{ fontSize: '12px' }}
+                      tickFormatter={(value) => 
+                        new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        }).format(value)
+                      }
+                    />
+                    <Tooltip 
+                      formatter={(value: number) =>
+                        new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(value)
+                      }
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="faturamento" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      name="Faturamento"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="despesas" 
+                      stroke="hsl(var(--destructive))" 
+                      strokeWidth={2}
+                      name="Despesas"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="lucro" 
+                      stroke="#10b981" 
+                      strokeWidth={2}
+                      name="Lucro Líquido"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
 
             <div className="grid gap-6 md:grid-cols-2 mb-8">
               <Card>
