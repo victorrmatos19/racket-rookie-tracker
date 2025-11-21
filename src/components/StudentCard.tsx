@@ -27,6 +27,13 @@ interface StudentCardProps {
   classTime: string;
   status: "active" | "inactive" | "improving" | "pending";
   onDelete?: () => void;
+  forehandProgress?: number;
+  backhandProgress?: number;
+  serveProgress?: number;
+  volleyProgress?: number;
+  sliceProgress?: number;
+  physicalProgress?: number;
+  tacticalProgress?: number;
 }
 
 const DAYS_MAP: Record<string, string> = {
@@ -46,11 +53,47 @@ const statusConfig = {
   pending: { label: "Pendente", variant: "secondary" as const },
 };
 
-export const StudentCard = ({ id, name, level, progress, classDays, classTime, status, onDelete }: StudentCardProps) => {
+const TENNIS_SKILLS = [
+  { id: "forehand", label: "Forehand", key: "forehandProgress" },
+  { id: "backhand", label: "Backhand", key: "backhandProgress" },
+  { id: "serve", label: "Saque", key: "serveProgress" },
+  { id: "volley", label: "Vôlei", key: "volleyProgress" },
+  { id: "slice", label: "Slice", key: "sliceProgress" },
+  { id: "physical", label: "Físico", key: "physicalProgress" },
+  { id: "tactical", label: "Tático", key: "tacticalProgress" },
+];
+
+export const StudentCard = ({ 
+  id, 
+  name, 
+  level, 
+  progress, 
+  classDays, 
+  classTime, 
+  status, 
+  onDelete,
+  forehandProgress = 0,
+  backhandProgress = 0,
+  serveProgress = 0,
+  volleyProgress = 0,
+  sliceProgress = 0,
+  physicalProgress = 0,
+  tacticalProgress = 0,
+}: StudentCardProps) => {
   const statusInfo = statusConfig[status];
   const daysLabel = classDays.map((day) => DAYS_MAP[day] || day).join(", ");
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+
+  const skillsProgress = {
+    forehandProgress,
+    backhandProgress,
+    serveProgress,
+    volleyProgress,
+    sliceProgress,
+    physicalProgress,
+    tacticalProgress,
+  };
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -127,15 +170,27 @@ export const StudentCard = ({ id, name, level, progress, classDays, classTime, s
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground flex items-center gap-1">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm pb-2 border-b border-border/50">
+            <span className="text-muted-foreground flex items-center gap-1 font-medium">
               <TrendingUp className="w-4 h-4" />
-              Progresso
+              Habilidades
             </span>
-            <span className="font-semibold text-primary">{progress}%</span>
           </div>
-          <Progress value={progress} className="h-2" />
+          <div className="grid grid-cols-2 gap-3">
+            {TENNIS_SKILLS.map((skill) => {
+              const skillProgress = skillsProgress[skill.key as keyof typeof skillsProgress];
+              return (
+                <div key={skill.id} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">{skill.label}</span>
+                    <span className="font-semibold text-primary">{skillProgress}%</span>
+                  </div>
+                  <Progress value={skillProgress} className="h-1.5" />
+                </div>
+              );
+            })}
+          </div>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t border-border/50">
           <Calendar className="w-4 h-4" />

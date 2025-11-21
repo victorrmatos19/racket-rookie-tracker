@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus } from "lucide-react";
@@ -33,6 +34,16 @@ const WEEK_DAYS = [
   { id: "domingo", label: "Domingo" },
 ];
 
+const TENNIS_SKILLS = [
+  { id: "forehand", label: "Forehand", icon: "🎾" },
+  { id: "backhand", label: "Backhand", icon: "🎾" },
+  { id: "serve", label: "Saque", icon: "🏓" },
+  { id: "volley", label: "Vôlei", icon: "🏐" },
+  { id: "slice", label: "Slice", icon: "🎯" },
+  { id: "physical", label: "Físico", icon: "💪" },
+  { id: "tactical", label: "Tático", icon: "🧠" },
+];
+
 export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => void }) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,6 +54,13 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
     classDays: [] as string[],
     classTime: "",
     status: "active",
+    forehandProgress: 0,
+    backhandProgress: 0,
+    serveProgress: 0,
+    volleyProgress: 0,
+    sliceProgress: 0,
+    physicalProgress: 0,
+    tacticalProgress: 0,
   });
   const { toast } = useToast();
 
@@ -70,6 +88,13 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
         class_days: formData.classDays,
         class_time: formData.classTime,
         status: formData.status,
+        forehand_progress: formData.forehandProgress,
+        backhand_progress: formData.backhandProgress,
+        serve_progress: formData.serveProgress,
+        volley_progress: formData.volleyProgress,
+        slice_progress: formData.sliceProgress,
+        physical_progress: formData.physicalProgress,
+        tactical_progress: formData.tacticalProgress,
       });
 
       if (error) throw error;
@@ -86,6 +111,13 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
         classDays: [],
         classTime: "",
         status: "active",
+        forehandProgress: 0,
+        backhandProgress: 0,
+        serveProgress: 0,
+        volleyProgress: 0,
+        sliceProgress: 0,
+        physicalProgress: 0,
+        tacticalProgress: 0,
       });
       setOpen(false);
       onStudentAdded();
@@ -108,7 +140,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
           Adicionar Aluno
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Cadastrar Novo Aluno</DialogTitle>
           <DialogDescription>
@@ -142,17 +174,36 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="progress">Progresso (%)</Label>
-              <Input
-                id="progress"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.progress}
-                onChange={(e) => setFormData({ ...formData, progress: e.target.value })}
-                required
-              />
+            <div className="grid gap-4">
+              <Label className="text-base font-semibold">Progresso por Habilidade</Label>
+              <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
+                {TENNIS_SKILLS.map((skill) => {
+                  const progressKey = `${skill.id}Progress` as keyof typeof formData;
+                  const progressValue = formData[progressKey] as number;
+                  
+                  return (
+                    <div key={skill.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor={skill.id} className="text-sm font-medium flex items-center gap-2">
+                          <span>{skill.icon}</span>
+                          {skill.label}
+                        </Label>
+                        <span className="text-sm font-semibold text-primary">{progressValue}%</span>
+                      </div>
+                      <Slider
+                        id={skill.id}
+                        value={[progressValue]}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, [progressKey]: value[0] })
+                        }
+                        max={100}
+                        step={5}
+                        className="w-full"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             <div className="grid gap-2">
               <Label>Dias das Aulas</Label>

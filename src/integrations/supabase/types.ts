@@ -40,40 +40,61 @@ export type Database = {
       }
       students: {
         Row: {
+          backhand_progress: number
           class_days: string[] | null
           class_time: string | null
           created_at: string
+          forehand_progress: number
           id: string
           level: string
           name: string
+          physical_progress: number
           progress: number
+          serve_progress: number
+          slice_progress: number
           status: string
+          tactical_progress: number
           updated_at: string
           user_id: string
+          volley_progress: number
         }
         Insert: {
+          backhand_progress?: number
           class_days?: string[] | null
           class_time?: string | null
           created_at?: string
+          forehand_progress?: number
           id?: string
           level: string
           name: string
+          physical_progress?: number
           progress?: number
+          serve_progress?: number
+          slice_progress?: number
           status?: string
+          tactical_progress?: number
           updated_at?: string
           user_id: string
+          volley_progress?: number
         }
         Update: {
+          backhand_progress?: number
           class_days?: string[] | null
           class_time?: string | null
           created_at?: string
+          forehand_progress?: number
           id?: string
           level?: string
           name?: string
+          physical_progress?: number
           progress?: number
+          serve_progress?: number
+          slice_progress?: number
           status?: string
+          tactical_progress?: number
           updated_at?: string
           user_id?: string
+          volley_progress?: number
         }
         Relationships: []
       }

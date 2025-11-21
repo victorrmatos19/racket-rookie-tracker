@@ -117,6 +117,13 @@ const Index = () => {
                   classTime={student.class_time || ""}
                   status={student.status}
                   onDelete={fetchStudents}
+                  forehandProgress={student.forehand_progress}
+                  backhandProgress={student.backhand_progress}
+                  serveProgress={student.serve_progress}
+                  volleyProgress={student.volley_progress}
+                  sliceProgress={student.slice_progress}
+                  physicalProgress={student.physical_progress}
+                  tacticalProgress={student.tactical_progress}
                 />
               ))}
             </div>
