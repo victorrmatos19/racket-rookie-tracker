@@ -11,13 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
@@ -26,11 +20,7 @@ import { Plus, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const WEEK_DAYS = [
   { id: "segunda", label: "Segunda" },
@@ -46,7 +36,7 @@ const TENNIS_SKILLS = [
   { id: "forehand", label: "Forehand", icon: "🎾" },
   { id: "backhand", label: "Backhand", icon: "🎾" },
   { id: "serve", label: "Saque", icon: "🏓" },
-  { id: "volley", label: "Vôlei", icon: "🏐" },
+  { id: "volley", label: "Voleio", icon: "🏐" },
   { id: "slice", label: "Slice", icon: "🎯" },
   { id: "physical", label: "Físico", icon: "💪" },
   { id: "tactical", label: "Tático", icon: "🧠" },
@@ -79,8 +69,10 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
     setIsLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         toast({
           title: "Erro",
@@ -99,7 +91,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
         class_time: formData.classTime,
         status: formData.status,
         monthly_fee: parseFloat(formData.monthlyFee) || 0,
-        class_start_date: format(formData.classStartDate, 'yyyy-MM-dd'),
+        class_start_date: format(formData.classStartDate, "yyyy-MM-dd"),
         forehand_progress: formData.forehandProgress,
         backhand_progress: formData.backhandProgress,
         serve_progress: formData.serveProgress,
@@ -157,9 +149,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Cadastrar Novo Aluno</DialogTitle>
-          <DialogDescription>
-            Preencha os dados do novo aluno
-          </DialogDescription>
+          <DialogDescription>Preencha os dados do novo aluno</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -174,10 +164,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
             </div>
             <div className="grid gap-2">
               <Label htmlFor="level">Nível</Label>
-              <Select
-                value={formData.level}
-                onValueChange={(value) => setFormData({ ...formData, level: value })}
-              >
+              <Select value={formData.level} onValueChange={(value) => setFormData({ ...formData, level: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o nível" />
                 </SelectTrigger>
@@ -194,7 +181,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
                 {TENNIS_SKILLS.map((skill) => {
                   const progressKey = `${skill.id}Progress` as keyof typeof formData;
                   const progressValue = formData[progressKey] as number;
-                  
+
                   return (
                     <div key={skill.id} className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -207,9 +194,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
                       <Slider
                         id={skill.id}
                         value={[progressValue]}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, [progressKey]: value[0] })
-                        }
+                        onValueChange={(value) => setFormData({ ...formData, [progressKey]: value[0] })}
                         max={100}
                         step={5}
                         className="w-full"
@@ -279,11 +264,15 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !formData.classStartDate && "text-muted-foreground"
+                      !formData.classStartDate && "text-muted-foreground",
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.classStartDate ? format(formData.classStartDate, "dd/MM/yyyy") : <span>Selecione a data</span>}
+                    {formData.classStartDate ? (
+                      format(formData.classStartDate, "dd/MM/yyyy")
+                    ) : (
+                      <span>Selecione a data</span>
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -299,10 +288,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
             </div>
             <div className="grid gap-2">
               <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
-              >
+              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
