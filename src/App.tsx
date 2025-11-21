@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Schedule from "./pages/Schedule";
 import Financial from "./pages/Financial";
+import Sistema from "./pages/Sistema";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +44,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Financial />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sistema"
+              element={
+                <ProtectedRoute>
+                  <Sistema />
                 </ProtectedRoute>
               }
             />

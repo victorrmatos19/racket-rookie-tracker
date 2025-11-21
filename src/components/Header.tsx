@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { LogOut, LayoutDashboard, Calendar, DollarSign, Menu, User, CreditCard } from "lucide-react";
+import { LogOut, LayoutDashboard, Calendar, DollarSign, Menu, User, CreditCard, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/tennis-coach-pro-logo.png";
@@ -14,11 +14,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export const Header = () => {
   const { signOut, user } = useAuth();
   const location = useLocation();
   const [profile, setProfile] = useState<any>(null);
+  const { isAdmin, isLoading: roleLoading } = useUserRole();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -30,10 +32,15 @@ export const Header = () => {
     fetchProfile();
   }, [user]);
 
-  const navItems = [
+  const baseNavItems = [
     { path: "/", label: "Alunos", icon: LayoutDashboard },
     { path: "/schedule", label: "Cronograma", icon: Calendar },
     { path: "/financial", label: "Financeiro", icon: DollarSign },
+  ];
+
+  const navItems = [
+    ...baseNavItems,
+    ...(isAdmin ? [{ path: "/sistema", label: "Sistema", icon: Settings }] : []),
   ];
 
   return (
