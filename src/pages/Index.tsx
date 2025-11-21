@@ -65,10 +65,6 @@ const Index = () => {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  const avgProgress = students.length > 0
-    ? Math.round(students.reduce((acc, s) => acc + s.progress, 0) / students.length)
-    : 0;
-
   const activeStudents = students.filter((s) => s.status === "active").length;
 
   // Filter students by search term
@@ -95,22 +91,10 @@ const Index = () => {
       trend: `${students.length} cadastrados`,
     },
     {
-      title: "Progresso Médio",
-      value: `${avgProgress}%`,
-      icon: TrendingUp,
-      trend: "Média geral",
-    },
-    {
       title: "Alunos Ativos",
       value: activeStudents,
       icon: Calendar,
       trend: `${students.length > 0 ? Math.round((activeStudents / students.length) * 100) : 0}% do total`,
-    },
-    {
-      title: "Conclusão",
-      value: `${students.filter((s) => s.progress >= 80).length}`,
-      icon: Award,
-      trend: "Acima de 80%",
     },
   ];
 
