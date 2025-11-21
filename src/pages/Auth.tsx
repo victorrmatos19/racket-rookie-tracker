@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Trophy } from "lucide-react";
+import logo from "@/assets/tennis-coach-pro-logo.png";
 
 const Auth = () => {
   const { signIn, signUp } = useAuth();
@@ -58,12 +58,13 @@ const Auth = () => {
       <div className="w-full max-w-md space-y-6">
         {/* Logo/Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-primary shadow-lg mb-4">
-            <Trophy className="w-8 h-8 text-primary-foreground" />
+          <div className="inline-flex items-center justify-center mb-4">
+            <img 
+              src={logo} 
+              alt="TennisCoach Pro" 
+              className="h-24 w-24 rounded-full object-cover shadow-xl"
+            />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            TennisCoach Pro
-          </h1>
           <p className="text-muted-foreground">
             Faça login para acessar o dashboard
           </p>

@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { LogOut, LayoutDashboard, Calendar, DollarSign } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import logo from "@/assets/tennis-coach-pro-logo.png";
 
 export const Header = () => {
   const { signOut, user } = useAuth();
@@ -19,11 +20,13 @@ export const Header = () => {
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                TennisCoach Pro
-              </h1>
-              <p className="text-muted-foreground text-sm">
+            <div className="flex items-center gap-3">
+              <img 
+                src={logo} 
+                alt="TennisCoach Pro" 
+                className="h-16 w-16 rounded-full object-cover shadow-md"
+              />
+              <p className="text-muted-foreground text-sm hidden sm:block">
                 Gerencie seus alunos e acompanhe a evolução
               </p>
             </div>
