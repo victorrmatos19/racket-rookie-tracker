@@ -21,6 +21,7 @@ const Auth = () => {
     email: "",
     password: "",
     fullName: "",
+    documento: "",
   });
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -42,7 +43,7 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signUp(signupData.email, signupData.password, signupData.fullName);
+    const { error } = await signUp(signupData.email, signupData.password, signupData.fullName, signupData.documento);
 
     if (error) {
       toast.error(error.message || "Erro ao criar conta");
@@ -119,6 +120,18 @@ const Auth = () => {
                       value={signupData.fullName}
                       onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
                       required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-documento">CPF/CNPJ</Label>
+                    <Input
+                      id="signup-documento"
+                      type="text"
+                      placeholder="000.000.000-00"
+                      value={signupData.documento}
+                      onChange={(e) => setSignupData({ ...signupData, documento: e.target.value })}
+                      required
+                      maxLength={18}
                     />
                   </div>
                   <div className="space-y-2">
