@@ -8,7 +8,7 @@ import { AddExpenseDialog } from "@/components/AddExpenseDialog";
 import { EditExpenseDialog } from "@/components/EditExpenseDialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Select,
@@ -125,7 +125,7 @@ const Financial = () => {
   const netProfit = totalRevenue - totalExpenses;
   const averageRevenue = activeStudents.length > 0 ? totalRevenue / activeStudents.length : 0;
 
-  const selectedMonthLabel = format(new Date(selectedMonth + '-01'), 'MMMM yyyy', { locale: ptBR });
+  const selectedMonthLabel = format(parse(selectedMonth, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ptBR });
 
   return (
     <div className="min-h-screen bg-background">
