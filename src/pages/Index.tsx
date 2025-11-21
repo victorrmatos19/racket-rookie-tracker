@@ -1,81 +1,73 @@
 import { StudentCard } from "@/components/StudentCard";
 import { StatsCard } from "@/components/StatsCard";
+import { AddStudentDialog } from "@/components/AddStudentDialog";
 import { Users, TrendingUp, Calendar, Award, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const { signOut, user } = useAuth();
-  
-  const students = [
-    {
-      name: "João Silva",
-      level: "Intermediário",
-      progress: 75,
-      nextClass: "15 Jan, 14:00",
-      status: "improving" as const,
-    },
-    {
-      name: "Maria Santos",
-      level: "Avançado",
-      progress: 90,
-      nextClass: "16 Jan, 10:00",
-      status: "active" as const,
-    },
-    {
-      name: "Pedro Costa",
-      level: "Iniciante",
-      progress: 45,
-      nextClass: "17 Jan, 16:00",
-      status: "active" as const,
-    },
-    {
-      name: "Ana Oliveira",
-      level: "Intermediário",
-      progress: 60,
-      nextClass: "18 Jan, 09:00",
-      status: "improving" as const,
-    },
-    {
-      name: "Carlos Ferreira",
-      level: "Iniciante",
-      progress: 30,
-      nextClass: "19 Jan, 15:00",
-      status: "inactive" as const,
-    },
-    {
-      name: "Juliana Lima",
-      level: "Avançado",
-      progress: 85,
-      nextClass: "20 Jan, 11:00",
-      status: "active" as const,
-    },
-  ];
+  const { toast } = useToast();
+  const [students, setStudents] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchStudents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("students")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setStudents(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar alunos",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const avgProgress = students.length > 0
+    ? Math.round(students.reduce((acc, s) => acc + s.progress, 0) / students.length)
+    : 0;
+
+  const activeStudents = students.filter((s) => s.status === "active").length;
 
   const stats = [
     {
       title: "Total de Alunos",
       value: students.length,
       icon: Users,
-      trend: "+2 este mês",
+      trend: `${students.length} cadastrados`,
     },
     {
       title: "Progresso Médio",
-      value: "64%",
+      value: `${avgProgress}%`,
       icon: TrendingUp,
-      trend: "+8% vs mês anterior",
+      trend: "Média geral",
     },
     {
-      title: "Aulas Agendadas",
-      value: "12",
+      title: "Alunos Ativos",
+      value: activeStudents,
       icon: Calendar,
-      trend: "Esta semana",
+      trend: `${students.length > 0 ? Math.round((activeStudents / students.length) * 100) : 0}% do total`,
     },
     {
-      title: "Alunos Evoluindo",
-      value: "4",
+      title: "Conclusão",
+      value: `${students.filter((s) => s.progress >= 80).length}`,
       icon: Award,
-      trend: "67% do total",
+      trend: "Acima de 80%",
     },
   ];
 
@@ -130,23 +122,32 @@ const Index = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-foreground">Meus Alunos</h2>
-            <span className="text-sm text-muted-foreground">
-              {students.length} alunos cadastrados
-            </span>
+            <AddStudentDialog onStudentAdded={fetchStudents} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {students.map((student, index) => (
-              <StudentCard
-                key={index}
-                name={student.name}
-                level={student.level}
-                progress={student.progress}
-                nextClass={student.nextClass}
-                status={student.status}
-              />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Carregando alunos...
+            </div>
+          ) : students.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p className="text-lg mb-2">Nenhum aluno cadastrado ainda</p>
+              <p className="text-sm">Clique em "Adicionar Aluno" para começar</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {students.map((student) => (
+                <StudentCard
+                  key={student.id}
+                  name={student.name}
+                  level={student.level}
+                  progress={student.progress}
+                  nextClass={student.next_class}
+                  status={student.status}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>
