@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import logo from "@/assets/tennis-coach-pro-logo.png";
@@ -22,6 +23,7 @@ const Auth = () => {
     password: "",
     fullName: "",
     documento: "",
+    role: "aluno" as "administrador" | "professor" | "aluno",
   });
 
   const formatDocumento = (value: string) => {
@@ -67,7 +69,7 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signUp(signupData.email, signupData.password, signupData.fullName, signupData.documento);
+    const { error } = await signUp(signupData.email, signupData.password, signupData.fullName, signupData.documento, signupData.role);
 
     if (error) {
       toast.error(error.message || "Erro ao criar conta");
@@ -157,6 +159,22 @@ const Auth = () => {
                       required
                       maxLength={18}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-role">Tipo de Usuário</Label>
+                    <Select
+                      value={signupData.role}
+                      onValueChange={(value) => setSignupData({ ...signupData, role: value as typeof signupData.role })}
+                    >
+                      <SelectTrigger id="signup-role">
+                        <SelectValue placeholder="Selecione o tipo de usuário" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="aluno">Aluno</SelectItem>
+                        <SelectItem value="professor">Professor</SelectItem>
+                        <SelectItem value="administrador">Administrador</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>

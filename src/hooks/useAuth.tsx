@@ -10,7 +10,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName: string, documento: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, documento: string, role: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -55,10 +55,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, documento: string) => {
+  const signUp = async (email: string, password: string, fullName: string, documento: string, role: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -66,11 +66,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         data: {
           full_name: fullName,
           documento: documento,
+          role: role,
         },
       },
     });
     
-    if (!error) {
+    if (!error && data.user) {
+      // Insert user role after successful signup
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({ user_id: data.user.id, role: role as any });
+      
+      if (roleError) {
+        console.error('Error inserting user role:', roleError);
+        toast({
+          title: "Aviso",
+          description: "Conta criada, mas houve um erro ao definir o tipo de usuário. Entre em contato com o administrador.",
+          variant: "destructive",
+        });
+      }
+      
       navigate("/");
     }
     
