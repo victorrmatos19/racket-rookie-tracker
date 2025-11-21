@@ -1,15 +1,13 @@
 import { StudentCard } from "@/components/StudentCard";
 import { StatsCard } from "@/components/StatsCard";
 import { AddStudentDialog } from "@/components/AddStudentDialog";
-import { Users, TrendingUp, Calendar, Award, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
+import { Header } from "@/components/Header";
+import { Users, TrendingUp, Calendar, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  const { signOut, user } = useAuth();
   const { toast } = useToast();
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,35 +71,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                TennisCoach Pro
-              </h1>
-              <p className="text-muted-foreground">
-                Gerencie seus alunos e acompanhe a evolução
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground hidden sm:inline">
-                {user?.email}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={signOut}
-                className="gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                Sair
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
