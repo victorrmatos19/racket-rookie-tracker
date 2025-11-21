@@ -165,6 +165,11 @@ const Financial = () => {
 
   const monthlyData = getMonthlyData();
 
+  // Calcular totais anuais
+  const totalAnualFaturamento = monthlyData.reduce((sum, month) => sum + month.faturamento, 0);
+  const totalAnualDespesas = monthlyData.reduce((sum, month) => sum + month.despesas, 0);
+  const totalAnualLucro = monthlyData.reduce((sum, month) => sum + month.lucro, 0);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -339,6 +344,35 @@ const Financial = () => {
                     />
                   </LineChart>
                 </ResponsiveContainer>
+                <div className="mt-6 pt-4 border-t grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Total Faturamento</p>
+                    <p className="text-lg font-semibold text-primary">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(totalAnualFaturamento)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Total Despesas</p>
+                    <p className="text-lg font-semibold text-destructive">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(totalAnualDespesas)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Total Lucro Líquido</p>
+                    <p className={`text-lg font-semibold ${totalAnualLucro >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(totalAnualLucro)}
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
