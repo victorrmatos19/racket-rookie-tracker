@@ -9,7 +9,15 @@ import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Database } from "@/integrations/supabase/types";
-import { Edit } from "lucide-react";
+import { Edit, CalendarIcon } from "lucide-react";
+import { format, parse } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type Student = Database["public"]["Tables"]["students"]["Row"];
 
@@ -46,6 +54,7 @@ export function EditStudentDialog({ student, onStudentUpdated }: EditStudentDial
     status: student.status,
     class_days: student.class_days || [],
     class_time: student.class_time || "",
+    class_start_date: student.class_start_date ? parse(student.class_start_date, 'yyyy-MM-dd', new Date()) : new Date(),
     monthly_fee: student.monthly_fee?.toString() || "",
     forehand_progress: student.forehand_progress,
     backhand_progress: student.backhand_progress,
@@ -64,6 +73,7 @@ export function EditStudentDialog({ student, onStudentUpdated }: EditStudentDial
         status: student.status,
         class_days: student.class_days || [],
         class_time: student.class_time || "",
+        class_start_date: student.class_start_date ? parse(student.class_start_date, 'yyyy-MM-dd', new Date()) : new Date(),
         monthly_fee: student.monthly_fee?.toString() || "",
         forehand_progress: student.forehand_progress,
         backhand_progress: student.backhand_progress,
@@ -88,6 +98,7 @@ export function EditStudentDialog({ student, onStudentUpdated }: EditStudentDial
           status: formData.status,
           class_days: formData.class_days,
           class_time: formData.class_time,
+          class_start_date: format(formData.class_start_date, 'yyyy-MM-dd'),
           monthly_fee: parseFloat(formData.monthly_fee) || 0,
           forehand_progress: formData.forehand_progress,
           backhand_progress: formData.backhand_progress,
@@ -220,26 +231,56 @@ export function EditStudentDialog({ student, onStudentUpdated }: EditStudentDial
               />
             </div>
 
+            <div>
+              <Label>Início na Aula</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.class_start_date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.class_start_date ? format(formData.class_start_date, "dd/MM/yyyy") : <span>Selecione a data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.class_start_date}
+                    onSelect={(date) => date && setFormData({ ...formData, class_start_date: date })}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
             <div className="space-y-4">
               <Label>Progresso dos Golpes</Label>
-              {TENNIS_SKILLS.map((skill) => (
-                <div key={skill.key} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm">
-                      {skill.icon} {skill.label}
-                    </Label>
-                    <span className="text-sm text-muted-foreground">
-                      {formData[skill.key as keyof typeof formData]}%
-                    </span>
+              {TENNIS_SKILLS.map((skill) => {
+                const progressValue = formData[skill.key as keyof typeof formData] as number;
+                return (
+                  <div key={skill.key} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">
+                        {skill.icon} {skill.label}
+                      </Label>
+                      <span className="text-sm text-muted-foreground">
+                        {progressValue}%
+                      </span>
+                    </div>
+                    <Slider
+                      value={[progressValue]}
+                      onValueChange={(value) => setFormData({ ...formData, [skill.key]: value[0] })}
+                      max={100}
+                      step={1}
+                    />
                   </div>
-                  <Slider
-                    value={[formData[skill.key as keyof typeof formData] as number]}
-                    onValueChange={(value) => setFormData({ ...formData, [skill.key]: value[0] })}
-                    max={100}
-                    step={1}
-                  />
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

@@ -147,6 +147,7 @@ export const StudentCard = ({
                 status,
                 class_days: classDays,
                 class_time: classTime,
+                class_start_date: new Date().toISOString().split('T')[0],
                 monthly_fee: monthlyFee,
                 forehand_progress: forehandProgress,
                 backhand_progress: backhandProgress,

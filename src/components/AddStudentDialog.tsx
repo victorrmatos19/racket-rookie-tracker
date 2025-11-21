@@ -22,7 +22,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus } from "lucide-react";
+import { Plus, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const WEEK_DAYS = [
   { id: "segunda", label: "Segunda" },
@@ -55,6 +63,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
     classTime: "",
     status: "active",
     monthlyFee: "",
+    classStartDate: new Date(),
     forehandProgress: 0,
     backhandProgress: 0,
     serveProgress: 0,
@@ -90,6 +99,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
         class_time: formData.classTime,
         status: formData.status,
         monthly_fee: parseFloat(formData.monthlyFee) || 0,
+        class_start_date: format(formData.classStartDate, 'yyyy-MM-dd'),
         forehand_progress: formData.forehandProgress,
         backhand_progress: formData.backhandProgress,
         serve_progress: formData.serveProgress,
@@ -114,6 +124,7 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
         classTime: "",
         status: "active",
         monthlyFee: "",
+        classStartDate: new Date(),
         forehandProgress: 0,
         backhandProgress: 0,
         serveProgress: 0,
@@ -259,6 +270,32 @@ export const AddStudentDialog = ({ onStudentAdded }: { onStudentAdded: () => voi
                 onChange={(e) => setFormData({ ...formData, monthlyFee: e.target.value })}
                 required
               />
+            </div>
+            <div className="grid gap-2">
+              <Label>Início na Aula</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.classStartDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.classStartDate ? format(formData.classStartDate, "dd/MM/yyyy") : <span>Selecione a data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.classStartDate}
+                    onSelect={(date) => date && setFormData({ ...formData, classStartDate: date })}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="status">Status</Label>

@@ -75,6 +75,7 @@ export type Database = {
         Row: {
           backhand_progress: number
           class_days: string[] | null
+          class_start_date: string
           class_time: string | null
           created_at: string
           forehand_progress: number
@@ -95,6 +96,7 @@ export type Database = {
         Insert: {
           backhand_progress?: number
           class_days?: string[] | null
+          class_start_date?: string
           class_time?: string | null
           created_at?: string
           forehand_progress?: number
@@ -115,6 +117,7 @@ export type Database = {
         Update: {
           backhand_progress?: number
           class_days?: string[] | null
+          class_start_date?: string
           class_time?: string | null
           created_at?: string
           forehand_progress?: number

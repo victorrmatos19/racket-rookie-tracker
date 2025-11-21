@@ -114,8 +114,19 @@ const Financial = () => {
     return expenseMonth === selectedMonth;
   });
 
+  // Filtrar alunos ativos que já começaram no mês selecionado ou antes
+  const activeStudentsInMonth = students.filter(s => {
+    if (s.status !== "active") return false;
+    
+    const startDate = new Date(s.class_start_date);
+    const selectedDate = parse(selectedMonth + '-01', 'yyyy-MM-dd', new Date());
+    
+    // Aluno deve ter começado no mês selecionado ou antes
+    return startDate <= selectedDate;
+  });
+
   const activeStudents = students.filter(s => s.status === "active");
-  const totalRevenue = activeStudents.reduce((sum, student) => {
+  const totalRevenue = activeStudentsInMonth.reduce((sum, student) => {
     const fee = typeof student.monthly_fee === 'number' ? student.monthly_fee : 0;
     return sum + fee;
   }, 0);
@@ -124,7 +135,7 @@ const Financial = () => {
     return sum + amount;
   }, 0);
   const netProfit = totalRevenue - totalExpenses;
-  const averageRevenue = activeStudents.length > 0 ? totalRevenue / activeStudents.length : 0;
+  const averageRevenue = activeStudentsInMonth.length > 0 ? totalRevenue / activeStudentsInMonth.length : 0;
 
   const selectedMonthLabel = format(parse(selectedMonth, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ptBR });
 
@@ -148,8 +159,18 @@ const Financial = () => {
         return sum + (typeof expense.amount === 'number' ? expense.amount : 0);
       }, 0);
       
-      // Faturamento é sempre o mesmo (alunos ativos * mensalidade)
-      const revenue = totalRevenue;
+      // Filtrar alunos que já começaram neste mês
+      const monthActiveStudents = students.filter(s => {
+        if (s.status !== "active") return false;
+        const startDate = new Date(s.class_start_date);
+        return startDate <= monthDate;
+      });
+      
+      // Faturamento é a soma das mensalidades dos alunos ativos no mês
+      const revenue = monthActiveStudents.reduce((sum, student) => {
+        const fee = typeof student.monthly_fee === 'number' ? student.monthly_fee : 0;
+        return sum + fee;
+      }, 0);
       const profit = revenue - totalExpensesMonth;
       
       data.push({
@@ -233,7 +254,7 @@ const Financial = () => {
                     }).format(totalRevenue)}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    De {activeStudents.length} aluno{activeStudents.length !== 1 ? 's' : ''} ativo{activeStudents.length !== 1 ? 's' : ''}
+                    De {activeStudentsInMonth.length} aluno{activeStudentsInMonth.length !== 1 ? 's' : ''} ativo{activeStudentsInMonth.length !== 1 ? 's' : ''} no mês
                   </p>
                 </CardContent>
               </Card>
@@ -296,13 +317,13 @@ const Financial = () => {
                 </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {activeStudents.length === 0 ? (
+                  {activeStudentsInMonth.length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
-                      Nenhum aluno ativo encontrado
+                      Nenhum aluno ativo neste mês
                     </p>
                   ) : (
                     <div className="divide-y">
-                      {activeStudents.map((student) => {
+                      {activeStudentsInMonth.map((student) => {
                         const fee = typeof student.monthly_fee === 'number' ? student.monthly_fee : 0;
                         return (
                           <div key={student.id} className="flex items-center justify-between py-4">
