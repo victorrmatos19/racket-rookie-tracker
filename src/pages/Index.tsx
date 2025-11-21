@@ -2,7 +2,8 @@ import { StudentCard } from "@/components/StudentCard";
 import { StatsCard } from "@/components/StatsCard";
 import { AddStudentDialog } from "@/components/AddStudentDialog";
 import { Header } from "@/components/Header";
-import { Users, TrendingUp, Calendar, Award } from "lucide-react";
+import { Users, TrendingUp, Calendar, Award, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ const Index = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
   const studentsPerPage = 10;
 
   const fetchStudents = async () => {
@@ -46,17 +48,26 @@ const Index = () => {
     fetchStudents();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const avgProgress = students.length > 0
     ? Math.round(students.reduce((acc, s) => acc + s.progress, 0) / students.length)
     : 0;
 
   const activeStudents = students.filter((s) => s.status === "active").length;
 
+  // Filter students by search term
+  const filteredStudents = students.filter((student) =>
+    student.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   // Pagination calculations
-  const totalPages = Math.ceil(students.length / studentsPerPage);
+  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
   const indexOfLastStudent = currentPage * studentsPerPage;
   const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
-  const currentStudents = students.slice(indexOfFirstStudent, indexOfLastStudent);
+  const currentStudents = filteredStudents.slice(indexOfFirstStudent, indexOfLastStudent);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -116,6 +127,18 @@ const Index = () => {
             <AddStudentDialog onStudentAdded={fetchStudents} />
           </div>
 
+          {/* Search Field */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Buscar aluno por nome..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
               Carregando alunos...
@@ -124,6 +147,11 @@ const Index = () => {
             <div className="text-center py-12 text-muted-foreground">
               <p className="text-lg mb-2">Nenhum aluno cadastrado ainda</p>
               <p className="text-sm">Clique em "Adicionar Aluno" para começar</p>
+            </div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p className="text-lg mb-2">Nenhum aluno encontrado</p>
+              <p className="text-sm">Tente buscar com outro nome</p>
             </div>
           ) : (
             <>
