@@ -1,13 +1,38 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { LogOut, LayoutDashboard, Calendar, DollarSign } from "lucide-react";
+import { LogOut, LayoutDashboard, Calendar, DollarSign, Menu, User, CreditCard } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/tennis-coach-pro-logo.png";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Header = () => {
   const { signOut, user } = useAuth();
   const location = useLocation();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        setProfile(data);
+      }
+    };
+    fetchProfile();
+  }, [user]);
 
   const navItems = [
     { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -53,18 +78,46 @@ export const Header = () => {
             </nav>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground hidden sm:inline">
-              {user?.email}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={signOut}
-              className="gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Sair
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Menu className="w-4 h-4" />
+                  <span className="hidden sm:inline">Menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel>Informações do Usuário</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="px-2 py-2 space-y-1">
+                  <div className="flex items-start gap-2">
+                    <User className="w-4 h-4 mt-0.5 text-muted-foreground" />
+                    <div className="flex-1 text-sm">
+                      <p className="font-medium">{profile?.full_name || "Nome não informado"}</p>
+                      <p className="text-muted-foreground text-xs">{user?.email}</p>
+                    </div>
+                  </div>
+                  {profile?.documento && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">CPF/CNPJ:</span>
+                      <span>{profile.documento}</span>
+                    </div>
+                  )}
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Plano</DropdownMenuLabel>
+                <div className="px-2 py-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CreditCard className="w-4 h-4 text-muted-foreground" />
+                    <span>Plano Gratuito</span>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut} className="gap-2 cursor-pointer">
+                  <LogOut className="w-4 h-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         {/* Mobile Navigation */}
