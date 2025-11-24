@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import logo from "@/assets/tennis-coach-pro-logo.png";
+import logo from "@/assets/racket-coach-pro-logo.png";
 
 const Auth = () => {
   const { signIn, signUp } = useAuth();

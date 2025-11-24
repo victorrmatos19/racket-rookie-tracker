@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { LogOut, LayoutDashboard, Calendar, DollarSign, Menu, User, CreditCard, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/tennis-coach-pro-logo.png";
+import logo from "@/assets/racket-coach-pro-logo.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
