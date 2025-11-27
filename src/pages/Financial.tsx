@@ -395,80 +395,6 @@ const Financial = () => {
             </div>
 
             <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>Controle de Mensalidades</CardTitle>
-                <CardDescription>Status de pagamento dos alunos no mês selecionado</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {payments.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      Nenhum aluno ativo neste mês
-                    </p>
-                  ) : (
-                    <div className="divide-y">
-                      {payments.map((payment) => {
-                        const student = students.find(s => s.id === payment.student_id);
-                        if (!student) return null;
-
-                        const expectedAmount = typeof payment.amount_expected === 'number' ? payment.amount_expected : 0;
-                        const paidAmount = typeof payment.amount_paid === 'number' ? payment.amount_paid : 0;
-
-                        return (
-                          <div key={payment.id} className="flex items-center justify-between py-4">
-                            <div className="flex-1">
-                              <p className="font-medium">{student.name}</p>
-                              <div className="flex gap-2 items-center text-sm text-muted-foreground mt-1">
-                                <span>{student.level}</span>
-                                {payment.payment_date && (
-                                  <>
-                                    <span>•</span>
-                                    <span>Pago em {new Date(payment.payment_date).toLocaleDateString('pt-BR')}</span>
-                                  </>
-                                )}
-                                {payment.payment_method && (
-                                  <>
-                                    <span>•</span>
-                                    <span className="capitalize">{payment.payment_method}</span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <div className="text-right">
-                                <p className="font-semibold">
-                                  {new Intl.NumberFormat('pt-BR', {
-                                    style: 'currency',
-                                    currency: 'BRL'
-                                  }).format(payment.payment_status === 'paid' ? paidAmount : expectedAmount)}
-                                </p>
-                              </div>
-                              <PaymentStatusBadge status={payment.payment_status as any} />
-                              {payment.payment_status === 'pending' && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => setConfirmingPayment({
-                                    id: payment.id,
-                                    student_name: student.name,
-                                    amount_expected: expectedAmount,
-                                    reference_month: payment.reference_month,
-                                  })}
-                                >
-                                  <CheckCircle className="h-4 w-4 mr-2" />
-                                  Confirmar
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>Despesas</CardTitle>
@@ -613,6 +539,80 @@ const Financial = () => {
                       }).format(totalAnualLucro)}
                     </p>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Controle de Mensalidades</CardTitle>
+                <CardDescription>Status de pagamento dos alunos no mês selecionado</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {payments.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      Nenhum aluno ativo neste mês
+                    </p>
+                  ) : (
+                    <div className="divide-y">
+                      {payments.map((payment) => {
+                        const student = students.find(s => s.id === payment.student_id);
+                        if (!student) return null;
+
+                        const expectedAmount = typeof payment.amount_expected === 'number' ? payment.amount_expected : 0;
+                        const paidAmount = typeof payment.amount_paid === 'number' ? payment.amount_paid : 0;
+
+                        return (
+                          <div key={payment.id} className="flex items-center justify-between py-4">
+                            <div className="flex-1">
+                              <p className="font-medium">{student.name}</p>
+                              <div className="flex gap-2 items-center text-sm text-muted-foreground mt-1">
+                                <span>{student.level}</span>
+                                {payment.payment_date && (
+                                  <>
+                                    <span>•</span>
+                                    <span>Pago em {new Date(payment.payment_date).toLocaleDateString('pt-BR')}</span>
+                                  </>
+                                )}
+                                {payment.payment_method && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="capitalize">{payment.payment_method}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <p className="font-semibold">
+                                  {new Intl.NumberFormat('pt-BR', {
+                                    style: 'currency',
+                                    currency: 'BRL'
+                                  }).format(payment.payment_status === 'paid' ? paidAmount : expectedAmount)}
+                                </p>
+                              </div>
+                              <PaymentStatusBadge status={payment.payment_status as any} />
+                              {payment.payment_status === 'pending' && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => setConfirmingPayment({
+                                    id: payment.id,
+                                    student_name: student.name,
+                                    amount_expected: expectedAmount,
+                                    reference_month: payment.reference_month,
+                                  })}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Confirmar
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
