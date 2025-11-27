@@ -74,6 +74,59 @@ export type Database = {
         }
         Relationships: []
       }
+      student_payments: {
+        Row: {
+          amount_expected: number
+          amount_paid: number | null
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string | null
+          payment_method: string | null
+          payment_status: string
+          reference_month: string
+          student_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_expected?: number
+          amount_paid?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          reference_month: string
+          student_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_expected?: number
+          amount_paid?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          reference_month?: string
+          student_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           backhand_progress: number
