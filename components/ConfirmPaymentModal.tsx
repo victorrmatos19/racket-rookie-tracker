@@ -17,6 +17,25 @@ import { supabase } from '@/lib/supabase';
 import { CustomPicker } from './CustomPicker';
 import Toast from 'react-native-toast-message';
 import { format } from 'date-fns';
+import { z } from 'zod';
+import { PAYMENT_METHODS, MAX_NOTES_LENGTH, MAX_EXPENSE_AMOUNT } from '@/constants';
+
+// ─── Validation schema ────────────────────────────────────────────────────────
+const ConfirmPaymentSchema = z.object({
+  amountPaid: z
+    .string()
+    .refine(
+      (v) => {
+        const n = parseFloat(v.replace(',', '.'));
+        return !isNaN(n) && n > 0 && n <= MAX_EXPENSE_AMOUNT;
+      },
+      { message: 'Informe um valor válido e maior que zero' }
+    ),
+  notes: z
+    .string()
+    .max(MAX_NOTES_LENGTH, `Observações limitadas a ${MAX_NOTES_LENGTH} caracteres`)
+    .optional(),
+});
 
 interface PaymentInfo {
   id: string;
@@ -56,16 +75,29 @@ export const ConfirmPaymentModal: React.FC<ConfirmPaymentModalProps> = ({
 
   const handleConfirm = async () => {
     if (!payment) return;
+
+    // Validate inputs before sending to backend
+    const result = ConfirmPaymentSchema.safeParse({
+      amountPaid: amountPaid.trim(),
+      notes: notes.trim(),
+    });
+
+    if (!result.success) {
+      const firstError = result.error.errors[0]?.message ?? 'Dados inválidos';
+      Toast.show({ type: 'error', text1: firstError });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { error } = await supabase
         .from('student_payments')
         .update({
           payment_status: 'paid',
-          amount_paid: parseFloat(amountPaid),
+          amount_paid: parseFloat(amountPaid.replace(',', '.')),
           payment_date: format(paymentDate, 'yyyy-MM-dd'),
           payment_method: paymentMethod,
-          notes: notes || null,
+          notes: notes.trim() || null,
         })
         .eq('id', payment.id);
 
@@ -73,8 +105,10 @@ export const ConfirmPaymentModal: React.FC<ConfirmPaymentModalProps> = ({
       Toast.show({ type: 'success', text1: 'Pagamento confirmado!' });
       onSuccess();
       onClose();
-    } catch (err: any) {
-      Toast.show({ type: 'error', text1: 'Erro ao confirmar pagamento', text2: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao confirmar pagamento';
+      if (__DEV__) console.error('[ConfirmPaymentModal]', err);
+      Toast.show({ type: 'error', text1: 'Erro ao confirmar pagamento', text2: message });
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +142,7 @@ export const ConfirmPaymentModal: React.FC<ConfirmPaymentModalProps> = ({
               onChangeText={setAmountPaid}
               keyboardType="numeric"
               placeholderTextColor={Colors.textMuted}
+              maxLength={12}
             />
           </View>
 
@@ -133,26 +168,29 @@ export const ConfirmPaymentModal: React.FC<ConfirmPaymentModalProps> = ({
               label="Método de Pagamento"
               value={paymentMethod}
               onValueChange={setPaymentMethod}
-              options={[
-                { label: 'PIX', value: 'pix' },
-                { label: 'Dinheiro', value: 'dinheiro' },
-                { label: 'Transferência', value: 'transferencia' },
-                { label: 'Manual', value: 'manual' },
-              ]}
+              options={PAYMENT_METHODS}
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Observações (opcional)</Text>
+            <Text style={styles.label}>
+              Observações (opcional — máx. {MAX_NOTES_LENGTH} caracteres)
+            </Text>
             <TextInput
               style={[styles.input, styles.textarea]}
               value={notes}
-              onChangeText={setNotes}
+              onChangeText={(v) => setNotes(v.slice(0, MAX_NOTES_LENGTH))}
               placeholder="Digite observações sobre o pagamento..."
               placeholderTextColor={Colors.textMuted}
               multiline
               numberOfLines={3}
+              maxLength={MAX_NOTES_LENGTH}
             />
+            {notes.length > MAX_NOTES_LENGTH - 50 && (
+              <Text style={styles.charCount}>
+                {notes.length}/{MAX_NOTES_LENGTH}
+              </Text>
+            )}
           </View>
         </ScrollView>
 
@@ -196,7 +234,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.primary + '30',
   },
-  infoLabel: { fontSize: 11, color: Colors.primary, fontWeight: '600', textTransform: 'uppercase', marginBottom: 2 },
+  infoLabel: {
+    fontSize: 11,
+    color: Colors.primary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
   infoValue: { fontSize: 15, color: Colors.text, fontWeight: '600', marginBottom: 10 },
   field: { marginBottom: 18 },
   label: { fontSize: 14, fontWeight: '500', color: Colors.text, marginBottom: 6 },
@@ -213,6 +257,7 @@ const styles = StyleSheet.create({
   },
   textarea: { height: 80, textAlignVertical: 'top' },
   inputText: { fontSize: 15, color: Colors.text },
+  charCount: { fontSize: 11, color: Colors.textMuted, textAlign: 'right', marginTop: 4 },
   footer: {
     flexDirection: 'row',
     padding: 16,

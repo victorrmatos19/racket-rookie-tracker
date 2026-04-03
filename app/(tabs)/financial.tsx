@@ -111,7 +111,7 @@ export default function FinancialScreen() {
 
       setPayments(allPayments ?? []);
     } catch (err) {
-      console.error('Error fetching payments:', err);
+      if (__DEV__) console.error('[FinancialScreen] fetchPayments error:', err);
     }
   }, [selectedMonth, students]);
 

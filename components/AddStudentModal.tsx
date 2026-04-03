@@ -18,26 +18,33 @@ import { supabase } from '@/lib/supabase';
 import { CustomPicker } from './CustomPicker';
 import Toast from 'react-native-toast-message';
 import { format } from 'date-fns';
+import { z } from 'zod';
+import {
+  WEEK_DAYS,
+  TENNIS_SKILLS_FORM,
+  STUDENT_LEVELS,
+  STUDENT_STATUSES,
+  MAX_MONTHLY_FEE,
+} from '@/constants';
 
-const WEEK_DAYS = [
-  { id: 'segunda', label: 'Seg' },
-  { id: 'terca', label: 'Ter' },
-  { id: 'quarta', label: 'Qua' },
-  { id: 'quinta', label: 'Qui' },
-  { id: 'sexta', label: 'Sex' },
-  { id: 'sabado', label: 'Sáb' },
-  { id: 'domingo', label: 'Dom' },
-];
-
-const TENNIS_SKILLS = [
-  { key: 'forehandProgress', label: 'Forehand' },
-  { key: 'backhandProgress', label: 'Backhand' },
-  { key: 'serveProgress', label: 'Saque' },
-  { key: 'volleyProgress', label: 'Voleio' },
-  { key: 'sliceProgress', label: 'Slice' },
-  { key: 'physicalProgress', label: 'Físico' },
-  { key: 'tacticalProgress', label: 'Tático' },
-];
+// ─── Validation schema ────────────────────────────────────────────────────────
+const AddStudentSchema = z.object({
+  name: z
+    .string()
+    .min(3, 'Nome deve ter pelo menos 3 caracteres')
+    .max(100, 'Nome muito longo'),
+  level: z.string().min(1, 'Selecione o nível do aluno'),
+  monthlyFee: z
+    .string()
+    .refine(
+      (v) => {
+        if (v === '' || v === '0') return true;
+        const n = parseFloat(v.replace(',', '.'));
+        return !isNaN(n) && n >= 0 && n <= MAX_MONTHLY_FEE;
+      },
+      { message: `Valor inválido (máximo R$ ${MAX_MONTHLY_FEE.toLocaleString('pt-BR')})` }
+    ),
+});
 
 interface AddStudentModalProps {
   visible: boolean;
@@ -78,34 +85,46 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ visible, onClo
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.level) {
-      Toast.show({ type: 'error', text1: 'Preencha o nome e nível do aluno' });
+    // Validate before sending to backend
+    const result = AddStudentSchema.safeParse({
+      name: form.name.trim(),
+      level: form.level,
+      monthlyFee: form.monthlyFee,
+    });
+
+    if (!result.success) {
+      const firstError = result.error.errors[0]?.message ?? 'Dados inválidos';
+      Toast.show({ type: 'error', text1: firstError });
       return;
     }
+
     setIsLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Não autenticado');
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error('Sessão expirada. Faça login novamente.');
 
       const classTimeStr = `${form.classTime.getHours().toString().padStart(2, '0')}:${form.classTime.getMinutes().toString().padStart(2, '0')}`;
+      const feeValue = parseFloat(form.monthlyFee.replace(',', '.')) || 0;
 
       const { error } = await supabase.from('students').insert({
         user_id: user.id,
-        name: form.name,
+        name: form.name.trim(),
         level: form.level,
         progress: 0,
         class_days: form.classDays,
         class_time: classTimeStr,
         status: form.status,
-        monthly_fee: parseFloat(form.monthlyFee) || 0,
+        monthly_fee: feeValue,
         class_start_date: format(form.classStartDate, 'yyyy-MM-dd'),
-        forehand_progress: form.forehandProgress,
-        backhand_progress: form.backhandProgress,
-        serve_progress: form.serveProgress,
-        volley_progress: form.volleyProgress,
-        slice_progress: form.sliceProgress,
-        physical_progress: form.physicalProgress,
-        tactical_progress: form.tacticalProgress,
+        forehand_progress: Math.round(form.forehandProgress),
+        backhand_progress: Math.round(form.backhandProgress),
+        serve_progress: Math.round(form.serveProgress),
+        volley_progress: Math.round(form.volleyProgress),
+        slice_progress: Math.round(form.sliceProgress),
+        physical_progress: Math.round(form.physicalProgress),
+        tactical_progress: Math.round(form.tacticalProgress),
       });
 
       if (error) throw error;
@@ -113,8 +132,10 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ visible, onClo
       setForm(initialForm);
       onAdded();
       onClose();
-    } catch (err: any) {
-      Toast.show({ type: 'error', text1: 'Erro ao cadastrar aluno', text2: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao cadastrar aluno';
+      if (__DEV__) console.error('[AddStudentModal]', err);
+      Toast.show({ type: 'error', text1: 'Erro ao cadastrar aluno', text2: message });
     } finally {
       setIsLoading(false);
     }
@@ -141,6 +162,8 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ visible, onClo
               onChangeText={(v) => setForm({ ...form, name: v })}
               placeholder="Nome do aluno"
               placeholderTextColor={Colors.textMuted}
+              maxLength={100}
+              autoCorrect={false}
             />
           </View>
 
@@ -151,11 +174,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ visible, onClo
               value={form.level}
               onValueChange={(v) => setForm({ ...form, level: v })}
               placeholder="Selecione o nível"
-              options={[
-                { label: 'Iniciante', value: 'Iniciante' },
-                { label: 'Intermediário', value: 'Intermediário' },
-                { label: 'Avançado', value: 'Avançado' },
-              ]}
+              options={STUDENT_LEVELS}
             />
           </View>
 
@@ -165,11 +184,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ visible, onClo
               label="Status"
               value={form.status}
               onValueChange={(v) => setForm({ ...form, status: v })}
-              options={[
-                { label: 'Ativo', value: 'active' },
-                { label: 'Inativo', value: 'inactive' },
-                { label: 'Pendente', value: 'pending' },
-              ]}
+              options={STUDENT_STATUSES}
             />
           </View>
 
@@ -183,6 +198,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ visible, onClo
               placeholder="0.00"
               keyboardType="numeric"
               placeholderTextColor={Colors.textMuted}
+              maxLength={10}
             />
           </View>
 
@@ -224,7 +240,11 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ visible, onClo
                 mode="time"
                 is24Hour
                 onChange={(_, date) => {
-                  setForm({ ...form, showTimePicker: Platform.OS === 'ios', classTime: date ?? form.classTime });
+                  setForm({
+                    ...form,
+                    showTimePicker: Platform.OS === 'ios',
+                    classTime: date ?? form.classTime,
+                  });
                 }}
               />
             )}
@@ -237,16 +257,18 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ visible, onClo
               style={styles.input}
               onPress={() => setForm({ ...form, showDatePicker: true })}
             >
-              <Text style={styles.inputText}>
-                {format(form.classStartDate, 'dd/MM/yyyy')}
-              </Text>
+              <Text style={styles.inputText}>{format(form.classStartDate, 'dd/MM/yyyy')}</Text>
             </TouchableOpacity>
             {form.showDatePicker && (
               <DateTimePicker
                 value={form.classStartDate}
                 mode="date"
                 onChange={(_, date) => {
-                  setForm({ ...form, showDatePicker: Platform.OS === 'ios', classStartDate: date ?? form.classStartDate });
+                  setForm({
+                    ...form,
+                    showDatePicker: Platform.OS === 'ios',
+                    classStartDate: date ?? form.classStartDate,
+                  });
                 }}
               />
             )}
@@ -255,7 +277,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ visible, onClo
           {/* Skills */}
           <View style={styles.field}>
             <Text style={styles.label}>Progresso por Habilidade</Text>
-            {TENNIS_SKILLS.map((skill) => {
+            {TENNIS_SKILLS_FORM.map((skill) => {
               const val = form[skill.key as keyof typeof form] as number;
               return (
                 <View key={skill.key} style={styles.skillRow}>

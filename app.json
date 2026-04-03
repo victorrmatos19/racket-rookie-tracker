@@ -14,14 +14,21 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.racketpro.app"
+      "bundleIdentifier": "com.racketpro.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Utilizado para adicionar foto de perfil do aluno.",
+        "NSPhotoLibraryUsageDescription": "Utilizado para selecionar foto de perfil do aluno.",
+        "NSFaceIDUsageDescription": "Utilizado para autenticação segura no aplicativo."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#f0fdf4"
       },
-      "package": "com.racketpro.app"
+      "package": "com.racketpro.app",
+      "minSdkVersion": 26,
+      "targetSdkVersion": 35
     },
     "web": {
       "bundler": "metro",

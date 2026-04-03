@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,16 +11,7 @@ import { Colors } from '@/constants/colors';
 import { supabase } from '@/lib/supabase';
 import Toast from 'react-native-toast-message';
 import { EditStudentModal } from './EditStudentModal';
-
-const DAYS_MAP: Record<string, string> = {
-  segunda: 'Seg',
-  terca: 'Ter',
-  quarta: 'Qua',
-  quinta: 'Qui',
-  sexta: 'Sex',
-  sabado: 'Sáb',
-  domingo: 'Dom',
-};
+import { TENNIS_SKILLS_FORM, DAYS_MAP } from '@/constants';
 
 const statusConfig: Record<string, { label: string; bg: string; color: string }> = {
   active: { label: 'Ativo', bg: '#f0fdf4', color: '#16a34a' },
@@ -28,16 +19,6 @@ const statusConfig: Record<string, { label: string; bg: string; color: string }>
   improving: { label: 'Evoluindo', bg: '#eff6ff', color: '#3b82f6' },
   pending: { label: 'Pendente', bg: '#fffbeb', color: '#d97706' },
 };
-
-const TENNIS_SKILLS = [
-  { key: 'forehandProgress', label: 'Forehand' },
-  { key: 'backhandProgress', label: 'Backhand' },
-  { key: 'serveProgress', label: 'Saque' },
-  { key: 'volleyProgress', label: 'Voleio' },
-  { key: 'sliceProgress', label: 'Slice' },
-  { key: 'physicalProgress', label: 'Físico' },
-  { key: 'tacticalProgress', label: 'Tático' },
-];
 
 interface StudentCardProps {
   id: string;
@@ -59,7 +40,7 @@ interface StudentCardProps {
   onRefresh: () => void;
 }
 
-export const StudentCard: React.FC<StudentCardProps> = ({
+export const StudentCard: React.FC<StudentCardProps> = React.memo(({
   id,
   name,
   level,
@@ -80,17 +61,32 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 }) => {
   const [editVisible, setEditVisible] = useState(false);
   const statusInfo = statusConfig[status] ?? statusConfig.active;
-  const daysLabel = classDays.map((d) => DAYS_MAP[d] ?? d).join(', ');
 
-  const skillsData = {
-    forehandProgress,
-    backhandProgress,
-    serveProgress,
-    volleyProgress,
-    sliceProgress,
-    physicalProgress,
-    tacticalProgress,
-  };
+  const daysLabel = useMemo(
+    () => classDays.map((d) => DAYS_MAP[d] ?? d).join(', '),
+    [classDays]
+  );
+
+  const skillsData = useMemo(
+    () => ({
+      forehandProgress,
+      backhandProgress,
+      serveProgress,
+      volleyProgress,
+      sliceProgress,
+      physicalProgress,
+      tacticalProgress,
+    }),
+    [
+      forehandProgress,
+      backhandProgress,
+      serveProgress,
+      volleyProgress,
+      sliceProgress,
+      physicalProgress,
+      tacticalProgress,
+    ]
+  );
 
   const handleDelete = () => {
     Alert.alert(
@@ -104,6 +100,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
           onPress: async () => {
             const { error } = await supabase.from('students').delete().eq('id', id);
             if (error) {
+              if (__DEV__) console.error('[StudentCard] delete error', error);
               Toast.show({ type: 'error', text1: 'Erro ao excluir aluno', text2: error.message });
             } else {
               Toast.show({ type: 'success', text1: 'Aluno excluído com sucesso' });
@@ -143,7 +140,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       <View style={styles.skillsSection}>
         <Text style={styles.sectionLabel}>Habilidades</Text>
         <View style={styles.skillsGrid}>
-          {TENNIS_SKILLS.map((skill) => {
+          {TENNIS_SKILLS_FORM.map((skill) => {
             const val = skillsData[skill.key as keyof typeof skillsData] ?? 0;
             return (
               <View key={skill.key} style={styles.skillItem}>
@@ -206,7 +203,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       />
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {

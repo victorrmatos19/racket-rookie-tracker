@@ -69,8 +69,8 @@ export default function AuthScreen() {
       Toast.show({ type: 'error', text1: 'Preencha todos os campos obrigatórios' });
       return;
     }
-    if (signupData.password.length < 6) {
-      Toast.show({ type: 'error', text1: 'A senha deve ter pelo menos 6 caracteres' });
+    if (signupData.password.length < 12) {
+      Toast.show({ type: 'error', text1: 'A senha deve ter pelo menos 12 caracteres' });
       return;
     }
     setIsLoading(true);
@@ -223,7 +223,7 @@ export default function AuthScreen() {
                     style={styles.input}
                     value={signupData.password}
                     onChangeText={(v) => setSignupData({ ...signupData, password: v })}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Mínimo 12 caracteres"
                     secureTextEntry
                     placeholderTextColor={Colors.textMuted}
                   />
