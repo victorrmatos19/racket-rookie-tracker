@@ -17,8 +17,8 @@ interface Student {
   id: string;
   name: string;
   level: string;
-  class_days: string[];
-  class_time: string;
+  class_days: string[] | null;
+  class_time: string | null;
   status: string;
 }
 
@@ -81,15 +81,16 @@ export default function ScheduleScreen() {
 
     students.forEach((student) => {
       if (!student.class_days || !student.class_time) return;
+      const classTime = student.class_time; // narrowed to string after guard above
       student.class_days.forEach((day) => {
         const daySchedule = schedule.find((s) => s.day === day);
         if (!daySchedule) return;
-        let slot = daySchedule.slots.find((sl) => sl.time === student.class_time);
-        if (!slot) {
-          slot = { time: student.class_time, students: [] };
-          daySchedule.slots.push(slot);
+        const existing = daySchedule.slots.find((sl) => sl.time === classTime);
+        if (existing) {
+          existing.students.push(student);
+        } else {
+          daySchedule.slots.push({ time: classTime, students: [student] });
         }
-        slot.students.push(student);
       });
     });
 
