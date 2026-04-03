@@ -16,6 +16,24 @@ import { Colors } from '@/constants/colors';
 import { supabase } from '@/lib/supabase';
 import Toast from 'react-native-toast-message';
 import { format } from 'date-fns';
+import { z } from 'zod';
+import { MAX_EXPENSE_AMOUNT } from '@/constants';
+
+// ─── Validation schema ────────────────────────────────────────────────────────
+const ExpenseSchema = z.object({
+  description: z
+    .string()
+    .min(2, 'Descrição deve ter pelo menos 2 caracteres')
+    .max(255, 'Descrição muito longa'),
+  amount: z.string().refine(
+    (v) => {
+      const n = parseFloat(v.replace(',', '.'));
+      return !isNaN(n) && n > 0 && n <= MAX_EXPENSE_AMOUNT;
+    },
+    { message: `Valor inválido. Deve ser maior que zero (máx. R$ ${MAX_EXPENSE_AMOUNT.toLocaleString('pt-BR')})` }
+  ),
+  category: z.string().max(100, 'Categoria muito longa').optional(),
+});
 
 interface AddExpenseModalProps {
   visible: boolean;
@@ -39,20 +57,28 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ visible, onClo
   };
 
   const handleSubmit = async () => {
-    if (!description || !amount) {
-      Toast.show({ type: 'error', text1: 'Preencha a descrição e o valor' });
+    const result = ExpenseSchema.safeParse({
+      description: description.trim(),
+      amount: amount.trim(),
+      category: category.trim() || undefined,
+    });
+
+    if (!result.success) {
+      const firstError = result.error.errors[0]?.message ?? 'Dados inválidos';
+      Toast.show({ type: 'error', text1: firstError });
       return;
     }
+
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Não autenticado');
+      if (!user) throw new Error('Sessão expirada. Faça login novamente.');
 
       const { error } = await supabase.from('expenses').insert({
         user_id: user.id,
-        description,
-        amount: parseFloat(amount),
-        category: category || null,
+        description: description.trim(),
+        amount: parseFloat(amount.replace(',', '.')),
+        category: category.trim() || null,
         expense_date: format(expenseDate, 'yyyy-MM-dd'),
       });
 
@@ -61,8 +87,10 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ visible, onClo
       resetForm();
       onAdded();
       onClose();
-    } catch (err: any) {
-      Toast.show({ type: 'error', text1: 'Erro ao adicionar despesa', text2: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao adicionar despesa';
+      if (__DEV__) console.error('[AddExpenseModal]', err);
+      Toast.show({ type: 'error', text1: 'Erro ao adicionar despesa', text2: message });
     } finally {
       setIsLoading(false);
     }
@@ -87,6 +115,8 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ visible, onClo
               onChangeText={setDescription}
               placeholder="Ex: Material esportivo"
               placeholderTextColor={Colors.textMuted}
+              maxLength={255}
+              autoCorrect={false}
             />
           </View>
 
@@ -99,6 +129,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ visible, onClo
               placeholder="0.00"
               keyboardType="numeric"
               placeholderTextColor={Colors.textMuted}
+              maxLength={12}
             />
           </View>
 
@@ -110,15 +141,13 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ visible, onClo
               onChangeText={setCategory}
               placeholder="Ex: Material, Manutenção..."
               placeholderTextColor={Colors.textMuted}
+              maxLength={100}
             />
           </View>
 
           <View style={styles.field}>
             <Text style={styles.label}>Data</Text>
-            <TouchableOpacity
-              style={styles.input}
-              onPress={() => setShowDatePicker(true)}
-            >
+            <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
               <Text style={styles.inputText}>{format(expenseDate, 'dd/MM/yyyy')}</Text>
             </TouchableOpacity>
             {showDatePicker && (

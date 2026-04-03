@@ -17,6 +17,24 @@ import { supabase } from '@/lib/supabase';
 import Toast from 'react-native-toast-message';
 import { format, parse } from 'date-fns';
 import { Expense } from '@/types/database';
+import { z } from 'zod';
+import { MAX_EXPENSE_AMOUNT } from '@/constants';
+
+// ─── Validation schema ────────────────────────────────────────────────────────
+const ExpenseSchema = z.object({
+  description: z
+    .string()
+    .min(2, 'Descrição deve ter pelo menos 2 caracteres')
+    .max(255, 'Descrição muito longa'),
+  amount: z.string().refine(
+    (v) => {
+      const n = parseFloat(v.replace(',', '.'));
+      return !isNaN(n) && n > 0 && n <= MAX_EXPENSE_AMOUNT;
+    },
+    { message: `Valor inválido. Deve ser maior que zero (máx. R$ ${MAX_EXPENSE_AMOUNT.toLocaleString('pt-BR')})` }
+  ),
+  category: z.string().max(100, 'Categoria muito longa').optional(),
+});
 
 interface EditExpenseModalProps {
   visible: boolean;
@@ -50,18 +68,26 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
   }, [visible, expense]);
 
   const handleSubmit = async () => {
-    if (!description || !amount) {
-      Toast.show({ type: 'error', text1: 'Preencha a descrição e o valor' });
+    const result = ExpenseSchema.safeParse({
+      description: description.trim(),
+      amount: amount.trim(),
+      category: category.trim() || undefined,
+    });
+
+    if (!result.success) {
+      const firstError = result.error.errors[0]?.message ?? 'Dados inválidos';
+      Toast.show({ type: 'error', text1: firstError });
       return;
     }
+
     setIsLoading(true);
     try {
       const { error } = await supabase
         .from('expenses')
         .update({
-          description,
-          amount: parseFloat(amount),
-          category: category || null,
+          description: description.trim(),
+          amount: parseFloat(amount.replace(',', '.')),
+          category: category.trim() || null,
           expense_date: format(expenseDate, 'yyyy-MM-dd'),
         })
         .eq('id', expense.id);
@@ -70,8 +96,10 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
       Toast.show({ type: 'success', text1: 'Despesa atualizada!' });
       onUpdated();
       onClose();
-    } catch (err: any) {
-      Toast.show({ type: 'error', text1: 'Erro ao atualizar despesa', text2: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao atualizar despesa';
+      if (__DEV__) console.error('[EditExpenseModal]', err);
+      Toast.show({ type: 'error', text1: 'Erro ao atualizar despesa', text2: message });
     } finally {
       setIsLoading(false);
     }
@@ -95,6 +123,8 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
               value={description}
               onChangeText={setDescription}
               placeholderTextColor={Colors.textMuted}
+              maxLength={255}
+              autoCorrect={false}
             />
           </View>
 
@@ -106,6 +136,7 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
               onChangeText={setAmount}
               keyboardType="numeric"
               placeholderTextColor={Colors.textMuted}
+              maxLength={12}
             />
           </View>
 
@@ -117,6 +148,7 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
               onChangeText={setCategory}
               placeholder="Opcional"
               placeholderTextColor={Colors.textMuted}
+              maxLength={100}
             />
           </View>
 

@@ -14,10 +14,10 @@ import { EditStudentModal } from './EditStudentModal';
 import { TENNIS_SKILLS_FORM, DAYS_MAP } from '@/constants';
 
 const statusConfig: Record<string, { label: string; bg: string; color: string }> = {
-  active: { label: 'Ativo', bg: '#f0fdf4', color: '#16a34a' },
-  inactive: { label: 'Inativo', bg: '#f3f4f6', color: '#6b7280' },
-  improving: { label: 'Evoluindo', bg: '#eff6ff', color: '#3b82f6' },
-  pending: { label: 'Pendente', bg: '#fffbeb', color: '#d97706' },
+  active:   { label: 'Ativo',     bg: Colors.primaryBg, color: Colors.primary },
+  inactive: { label: 'Inativo',   bg: Colors.muted,     color: Colors.textMuted },
+  improving:{ label: 'Evoluindo', bg: Colors.infoBg,    color: Colors.info },
+  pending:  { label: 'Pendente',  bg: Colors.warningBg, color: Colors.warningDark },
 };
 
 interface StudentCardProps {

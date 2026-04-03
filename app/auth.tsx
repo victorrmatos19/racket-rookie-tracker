@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,10 @@ import { CustomPicker } from '@/components/CustomPicker';
 
 type Tab = 'login' | 'signup';
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 const formatDocumento = (value: string) => {
   const numbers = value.replace(/\D/g, '');
   if (numbers.length <= 11) {
@@ -35,6 +39,48 @@ const formatDocumento = (value: string) => {
   }
 };
 
+const isValidCPF = (cpf: string): boolean => {
+  const n = cpf.replace(/\D/g, '');
+  if (n.length !== 11 || /^(\d)\1+$/.test(n)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(n[i]) * (10 - i);
+  let check = 11 - (sum % 11);
+  if (check >= 10) check = 0;
+  if (check !== parseInt(n[9])) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(n[i]) * (11 - i);
+  check = 11 - (sum % 11);
+  if (check >= 10) check = 0;
+  return check === parseInt(n[10]);
+};
+
+const isValidCNPJ = (cnpj: string): boolean => {
+  const n = cnpj.replace(/\D/g, '');
+  if (n.length !== 14 || /^(\d)\1+$/.test(n)) return false;
+  const calc = (digits: string, weights: number[]) =>
+    digits.split('').reduce((sum, d, i) => sum + parseInt(d) * weights[i], 0);
+  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const r1 = calc(n.slice(0, 12), w1) % 11;
+  const d1 = r1 < 2 ? 0 : 11 - r1;
+  if (d1 !== parseInt(n[12])) return false;
+  const r2 = calc(n.slice(0, 13), w2) % 11;
+  const d2 = r2 < 2 ? 0 : 11 - r2;
+  return d2 === parseInt(n[13]);
+};
+
+const isValidDocumento = (doc: string): boolean => {
+  const digits = doc.replace(/\D/g, '');
+  if (digits.length === 11) return isValidCPF(digits);
+  if (digits.length === 14) return isValidCNPJ(digits);
+  return digits.length === 0; // empty is ok (optional field)
+};
+
+// ─── Rate limiting ─────────────────────────────────────────────────────────────
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 60_000; // 1 minute
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function AuthScreen() {
   const { signIn, signUp } = useAuth();
   const [tab, setTab] = useState<Tab>('login');
@@ -49,35 +95,79 @@ export default function AuthScreen() {
     role: 'professor',
   });
 
+  // Client-side rate limiting state
+  const loginAttempts = useRef(0);
+  const lastAttemptAt = useRef<number | null>(null);
+
   const handleLogin = async () => {
+    // Rate limiting check
+    const now = Date.now();
+    if (
+      loginAttempts.current >= MAX_ATTEMPTS &&
+      lastAttemptAt.current !== null &&
+      now - lastAttemptAt.current < LOCKOUT_MS
+    ) {
+      const remaining = Math.ceil((LOCKOUT_MS - (now - lastAttemptAt.current)) / 1000);
+      Toast.show({
+        type: 'error',
+        text1: 'Muitas tentativas',
+        text2: `Aguarde ${remaining}s antes de tentar novamente`,
+      });
+      return;
+    }
+
     if (!loginData.email || !loginData.password) {
       Toast.show({ type: 'error', text1: 'Preencha email e senha' });
       return;
     }
+
+    if (!EMAIL_REGEX.test(loginData.email.trim())) {
+      Toast.show({ type: 'error', text1: 'Informe um email válido' });
+      return;
+    }
+
     setIsLoading(true);
-    const { error } = await signIn(loginData.email, loginData.password);
+    loginAttempts.current += 1;
+    lastAttemptAt.current = Date.now();
+
+    const { error } = await signIn(loginData.email.trim(), loginData.password);
     if (error) {
-      Toast.show({ type: 'error', text1: 'Erro ao fazer login', text2: error.message });
+      Toast.show({ type: 'error', text1: 'Email ou senha incorretos' });
     } else {
-      Toast.show({ type: 'success', text1: 'Login realizado com sucesso!' });
+      loginAttempts.current = 0; // reset on success
     }
     setIsLoading(false);
   };
 
   const handleSignup = async () => {
-    if (!signupData.email || !signupData.password || !signupData.fullName) {
+    const trimmedEmail = signupData.email.trim();
+    const trimmedName = signupData.fullName.trim();
+
+    if (!trimmedEmail || !signupData.password || !trimmedName) {
       Toast.show({ type: 'error', text1: 'Preencha todos os campos obrigatórios' });
       return;
     }
+
+    if (!EMAIL_REGEX.test(trimmedEmail)) {
+      Toast.show({ type: 'error', text1: 'Informe um email válido' });
+      return;
+    }
+
     if (signupData.password.length < 12) {
       Toast.show({ type: 'error', text1: 'A senha deve ter pelo menos 12 caracteres' });
       return;
     }
+
+    if (signupData.documento && !isValidDocumento(signupData.documento)) {
+      Toast.show({ type: 'error', text1: 'CPF ou CNPJ inválido' });
+      return;
+    }
+
     setIsLoading(true);
     const { error } = await signUp(
-      signupData.email,
+      trimmedEmail,
       signupData.password,
-      signupData.fullName,
+      trimmedName,
       signupData.documento,
       signupData.role
     );
@@ -143,6 +233,7 @@ export default function AuthScreen() {
                     placeholder="seu@email.com"
                     keyboardType="email-address"
                     autoCapitalize="none"
+                    autoCorrect={false}
                     placeholderTextColor={Colors.textMuted}
                   />
                 </View>
@@ -178,6 +269,7 @@ export default function AuthScreen() {
                     onChangeText={(v) => setSignupData({ ...signupData, fullName: v })}
                     placeholder="Seu nome"
                     placeholderTextColor={Colors.textMuted}
+                    autoCorrect={false}
                   />
                 </View>
                 <View style={styles.field}>
@@ -214,6 +306,7 @@ export default function AuthScreen() {
                     placeholder="seu@email.com"
                     keyboardType="email-address"
                     autoCapitalize="none"
+                    autoCorrect={false}
                     placeholderTextColor={Colors.textMuted}
                   />
                 </View>

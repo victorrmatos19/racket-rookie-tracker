@@ -18,7 +18,21 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Utilizado para adicionar foto de perfil do aluno.",
         "NSPhotoLibraryUsageDescription": "Utilizado para selecionar foto de perfil do aluno.",
-        "NSFaceIDUsageDescription": "Utilizado para autenticação segura no aplicativo."
+        "NSFaceIDUsageDescription": "Utilizado para autenticação segura no aplicativo.",
+        "NSLocalNetworkUsageDescription": "Utilizado para comunicação com o servidor de dados do aplicativo.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false
+        }
+      },
+      "privacyManifests": {
+        "NSPrivacyCollectedDataTypes": [
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeEmailAddress",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
+          }
+        ]
       }
     },
     "android": {

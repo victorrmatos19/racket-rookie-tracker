@@ -4,6 +4,15 @@ import { supabase } from '@/lib/supabase';
 
 export type UserRole = 'administrador' | 'professor' | 'aluno' | null;
 
+const VALID_ROLES: readonly string[] = ['administrador', 'professor', 'aluno'];
+
+const toUserRole = (value: unknown): UserRole => {
+  if (typeof value === 'string' && VALID_ROLES.includes(value)) {
+    return value as UserRole;
+  }
+  return null;
+};
+
 export const useUserRole = () => {
   const { user } = useAuth();
   const [role, setRole] = useState<UserRole>(null);
@@ -25,7 +34,9 @@ export const useUserRole = () => {
           .single();
 
         if (error) throw error;
-        setRole(data?.role as UserRole);
+
+        // Validate that the value from DB is one of the known roles
+        setRole(toUserRole(data?.role));
       } catch {
         setRole(null);
       } finally {
@@ -34,7 +45,7 @@ export const useUserRole = () => {
     };
 
     fetchUserRole();
-  }, [user]);
+  }, [user?.id]);
 
   return {
     role,
