@@ -85,7 +85,8 @@ export default function FinancialScreen() {
       const selectedDate = parse(selectedMonth + '-01', 'yyyy-MM-dd', new Date());
       const activeStudents = students.filter((s) => {
         if (s.status !== 'active') return false;
-        return new Date(s.class_start_date) <= selectedDate;
+        const startMonth = format(new Date(s.class_start_date), 'yyyy-MM');
+        return startMonth <= selectedMonth;
       });
 
       const withPayment = new Set((existing ?? []).map((p) => p.student_id));
