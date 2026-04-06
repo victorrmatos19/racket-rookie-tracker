@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
   Dimensions,
   RefreshControl,
+  TextInput,
+  TouchableOpacity,
 } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { supabase } from '@/lib/supabase';
@@ -29,6 +31,35 @@ interface UserData {
   created_at: string;
 }
 
+interface PlanStat {
+  id: string;
+  name: string;
+  price_brl: number;
+  activeCount: number;
+  trialingCount: number;
+}
+
+interface SubscriberRow {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  plan_name: string;
+  status: string;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  email: string;
+}
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  trialing:  { label: 'Trial',     color: Colors.warningDark, bg: Colors.warningBg },
+  active:    { label: 'Ativo',     color: Colors.primary,     bg: Colors.primaryBg },
+  past_due:  { label: 'Atrasado',  color: Colors.dangerDark,  bg: Colors.dangerBg  },
+  canceled:  { label: 'Cancelado', color: Colors.textMuted,   bg: Colors.muted     },
+  incomplete:{ label: 'Incompleto',color: Colors.textMuted,   bg: Colors.muted     },
+};
+
+const PAGE_SIZE_SUBS = 20;
+
 const roleConfig: Record<string, { label: string; color: string; bg: string }> = {
   administrador: { label: 'Admin', color: Colors.dangerDark, bg: Colors.dangerBg },
   professor: { label: 'Professor', color: Colors.primary, bg: Colors.primaryBg },
@@ -42,6 +73,12 @@ export default function SistemaScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [chartLabels, setChartLabels] = useState<string[]>([]);
   const [chartData, setChartData] = useState<number[]>([]);
+
+  // Subscription analytics state
+  const [planStats, setPlanStats] = useState<PlanStat[]>([]);
+  const [subscribers, setSubscribers] = useState<SubscriberRow[]>([]);
+  const [subSearch, setSubSearch] = useState('');
+  const [subPage, setSubPage] = useState(1);
 
   const fetchData = async () => {
     try {
@@ -69,6 +106,39 @@ export default function SistemaScreen() {
       });
 
       setUsers(combined);
+
+      // Subscription analytics
+      const [plansRes, subsRes] = await Promise.all([
+        supabase.from('plans').select('*').order('price_brl'),
+        supabase.from('subscriptions').select('*, profiles(email)'),
+      ]);
+
+      if (!plansRes.error && !subsRes.error) {
+        const subs = subsRes.data ?? [];
+        const plans = plansRes.data ?? [];
+
+        const stats: PlanStat[] = plans.map((p) => ({
+          id: p.id,
+          name: p.name,
+          price_brl: p.price_brl,
+          activeCount: subs.filter((s) => s.plan_id === p.id && s.status === 'active').length,
+          trialingCount: subs.filter((s) => s.plan_id === p.id && s.status === 'trialing').length,
+        }));
+
+        const rows: SubscriberRow[] = subs.map((s) => ({
+          id: s.id,
+          user_id: s.user_id,
+          plan_id: s.plan_id,
+          plan_name: plans.find((p) => p.id === s.plan_id)?.name ?? s.plan_id,
+          status: s.status,
+          trial_ends_at: s.trial_ends_at,
+          current_period_end: s.current_period_end,
+          email: (s.profiles as any)?.email ?? '—',
+        }));
+
+        setPlanStats(stats);
+        setSubscribers(rows);
+      }
 
       // Chart data
       const endDate = new Date();
@@ -196,6 +266,114 @@ export default function SistemaScreen() {
           })}
         </View>
 
+        {/* ── Subscription Analytics ── */}
+        {planStats.length > 0 && (() => {
+          const totalActive = planStats.reduce((s, p) => s + p.activeCount, 0);
+          const totalTrialing = planStats.reduce((s, p) => s + p.trialingCount, 0);
+          const mrr = planStats.reduce((s, p) => s + (p.activeCount + p.trialingCount) * p.price_brl, 0);
+          const formatBRL = (cents: number) =>
+            new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
+
+          const filteredSubs = subscribers.filter((s) =>
+            s.email.toLowerCase().includes(subSearch.toLowerCase())
+          );
+          const pagedSubs = filteredSubs.slice(0, subPage * PAGE_SIZE_SUBS);
+          const hasMoreSubs = pagedSubs.length < filteredSubs.length;
+
+          return (
+            <>
+              {/* MRR Summary */}
+              <View style={styles.subSection}>
+                <Text style={styles.sectionTitle}>Assinaturas</Text>
+                <View style={styles.mrrRow}>
+                  <View style={[styles.mrrCard, { borderColor: Colors.primary }]}>
+                    <Text style={styles.mrrLabel}>MRR Total</Text>
+                    <Text style={[styles.mrrValue, { color: Colors.primary }]}>{formatBRL(mrr)}</Text>
+                  </View>
+                  <View style={styles.mrrCard}>
+                    <Text style={styles.mrrLabel}>Ativos</Text>
+                    <Text style={styles.mrrValue}>{totalActive}</Text>
+                  </View>
+                  <View style={styles.mrrCard}>
+                    <Text style={styles.mrrLabel}>Em Trial</Text>
+                    <Text style={[styles.mrrValue, { color: Colors.warningDark }]}>{totalTrialing}</Text>
+                  </View>
+                </View>
+
+                {/* Per-plan cards */}
+                {planStats.map((p) => (
+                  <View key={p.id} style={styles.planCard}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.planCardName}>{p.name}</Text>
+                      <Text style={styles.planCardSub}>
+                        {p.activeCount} ativo(s) · {p.trialingCount} trial
+                      </Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={styles.planCardMrr}>
+                        {formatBRL((p.activeCount + p.trialingCount) * p.price_brl)}
+                      </Text>
+                      <Text style={styles.planCardMrrLabel}>MRR</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              {/* Subscribers table */}
+              <View style={styles.subSection}>
+                <Text style={styles.sectionTitle}>Assinantes</Text>
+                <View style={styles.searchBar}>
+                  <Ionicons name="search-outline" size={16} color={Colors.textMuted} />
+                  <TextInput
+                    style={styles.searchInput}
+                    value={subSearch}
+                    onChangeText={(v) => { setSubSearch(v); setSubPage(1); }}
+                    placeholder="Buscar por email..."
+                    placeholderTextColor={Colors.textMuted}
+                  />
+                </View>
+
+                {pagedSubs.length === 0 ? (
+                  <Text style={styles.emptyText}>Nenhum assinante encontrado</Text>
+                ) : (
+                  pagedSubs.map((sub) => {
+                    const sc = STATUS_CONFIG[sub.status] ?? STATUS_CONFIG.canceled;
+                    return (
+                      <View key={sub.id} style={styles.subRow}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.subEmail} numberOfLines={1}>{sub.email}</Text>
+                          <Text style={styles.subMeta}>
+                            {sub.plan_name}
+                            {sub.trial_ends_at
+                              ? ` · Trial até ${new Date(sub.trial_ends_at).toLocaleDateString('pt-BR')}`
+                              : sub.current_period_end
+                              ? ` · Renova ${new Date(sub.current_period_end).toLocaleDateString('pt-BR')}`
+                              : ''}
+                          </Text>
+                        </View>
+                        <View style={[styles.statusBadge, { backgroundColor: sc.bg }]}>
+                          <Text style={[styles.statusText, { color: sc.color }]}>{sc.label}</Text>
+                        </View>
+                      </View>
+                    );
+                  })
+                )}
+
+                {hasMoreSubs && (
+                  <TouchableOpacity
+                    style={styles.loadMoreBtn}
+                    onPress={() => setSubPage((p) => p + 1)}
+                  >
+                    <Text style={styles.loadMoreText}>
+                      Carregar mais ({filteredSubs.length - pagedSubs.length} restantes)
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </>
+          );
+        })()}
+
         <View style={{ height: 20 }} />
       </View>
     </ScrollView>
@@ -254,4 +432,72 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   roleText: { fontSize: 12, fontWeight: '600' },
+
+  // Subscription analytics
+  subSection: {
+    backgroundColor: Colors.card,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginTop: 14,
+  },
+  mrrRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
+  mrrCard: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 12,
+    alignItems: 'center',
+  },
+  mrrLabel: { fontSize: 11, color: Colors.textMuted, marginBottom: 4 },
+  mrrValue: { fontSize: 18, fontWeight: '800', color: Colors.text },
+
+  planCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.muted,
+  },
+  planCardName: { fontSize: 14, fontWeight: '700', color: Colors.text },
+  planCardSub: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+  planCardMrr: { fontSize: 15, fontWeight: '700', color: Colors.primary },
+  planCardMrrLabel: { fontSize: 11, color: Colors.textMuted },
+
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 6,
+    marginBottom: 12,
+  },
+  searchInput: { flex: 1, fontSize: 14, color: Colors.text },
+  emptyText: { color: Colors.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: 12 },
+
+  subRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.muted,
+    gap: 10,
+  },
+  subEmail: { fontSize: 13, fontWeight: '600', color: Colors.text },
+  subMeta: { fontSize: 11, color: Colors.textMuted, marginTop: 2 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
+  statusText: { fontSize: 11, fontWeight: '700' },
+  loadMoreBtn: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  loadMoreText: { color: Colors.primary, fontWeight: '600', fontSize: 13 },
 });

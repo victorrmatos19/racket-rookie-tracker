@@ -16,6 +16,8 @@ import { Student } from '@/types/database';
 import { StudentCard } from '@/components/StudentCard';
 import { StatsCard } from '@/components/StatsCard';
 import { AddStudentModal } from '@/components/AddStudentModal';
+import { PlanLimitModal } from '@/components/PlanLimitModal';
+import { useSubscription } from '@/hooks/useSubscription';
 import Toast from 'react-native-toast-message';
 
 const PAGE_SIZE = 10;
@@ -29,6 +31,19 @@ export default function StudentsScreen() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [limitModalVisible, setLimitModalVisible] = useState(false);
+  const { subscription, plan, isLoading: subLoading } = useSubscription();
+
+  const handleAddStudent = () => {
+    if (!subLoading && plan?.max_students !== null && plan !== null) {
+      const activeCount = students.filter((s) => s.status === 'active').length;
+      if (activeCount >= plan.max_students) {
+        setLimitModalVisible(true);
+        return;
+      }
+    }
+    setAddModalVisible(true);
+  };
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -118,7 +133,7 @@ export default function StudentsScreen() {
               <Text style={styles.sectionTitle}>Meus Alunos</Text>
               <TouchableOpacity
                 style={styles.addBtn}
-                onPress={() => setAddModalVisible(true)}
+                onPress={handleAddStudent}
               >
                 <Ionicons name="add" size={18} color={Colors.white} />
                 <Text style={styles.addBtnText}>Adicionar</Text>
@@ -195,6 +210,15 @@ export default function StudentsScreen() {
         onClose={() => setAddModalVisible(false)}
         onAdded={fetchStudents}
       />
+      {plan?.max_students !== null && plan !== null && (
+        <PlanLimitModal
+          visible={limitModalVisible}
+          onClose={() => setLimitModalVisible(false)}
+          currentCount={students.filter((s) => s.status === 'active').length}
+          limit={plan.max_students!}
+          planName={plan.name}
+        />
+      )}
     </View>
   );
 }

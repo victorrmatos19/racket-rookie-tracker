@@ -32,6 +32,9 @@ function RootLayoutNav() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="auth" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="plans" options={{ presentation: 'modal', headerShown: true, title: 'Planos' }} />
+        <Stack.Screen name="payment-success" />
+        <Stack.Screen name="payment-cancel" />
       </Stack>
       <Toast />
     </>
